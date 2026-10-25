@@ -1,4 +1,15 @@
-# ... (rest of the top file stays the same)
+name: CoinPaws CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -11,7 +22,6 @@
     - name: Install Dependencies
       run: npm install
 
-    # 💡 We temporarily removed the npm run lint step here to keep your pipeline moving smoothly!
     - name: Test Production Build
       run: npm run build
       env:
