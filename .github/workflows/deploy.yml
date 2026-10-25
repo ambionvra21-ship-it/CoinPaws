@@ -31,13 +31,9 @@ jobs:
 
     - name: Generate Production Web Assets
       run: |
-        # 1. Force the asset directory to exist immediately
-        mkdir -p dist
-        
-        # 2. Inject our stable temporary placeholder shell so the wrapper never crashes
-        echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CoinPaws</title></head><body style="background:#020617;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;"><div><span style="font-size:4rem;">🐾</span><h1 style="margin-top:10px;font-weight:900;">CoinPaws Mobile</h1><p style="color:#94a3b8;font-size:0.875rem;">Framework Pipeline Initialized Successfully.</p></div></body></html>' > dist/index.html
-        
-        # 3. Attempt the web compilation but append our bypass flag to prevent it from halting the run
+       mkdir -p dist
+        # We removed the override string so Vite packs your real screens!
+        npm run buildpass flag to prevent it from halting the run
         
     - name: Structural Mobile Wrapper Initialization
       run: |
