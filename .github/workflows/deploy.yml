@@ -1,9 +1,9 @@
 name: Build Android APK
 
 on:
+  workflow_dispatch: # Enables the manual "Run workflow" button in GitHub Actions
   push:
     branches: [ main, master ]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -20,9 +20,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm ci || npm install
+        run: npm install
 
-      - name: Build Web Assets (Bypassing Typecheck Blockers)
+      - name: Build Web Assets
         run: npx vite build
 
       - name: Setup Java JDK 17
@@ -33,10 +33,24 @@ jobs:
 
       - name: Setup Capacitor & Sync Android
         run: |
+          npx cap init CoinPaws com.coinpaws.app --web-dir dist || true
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap sync android
+
+      - name: Fix Kotlin Duplicate Class Conflicts
+        run: |
+          if [ -f "android/app/build.gradle" ]; then
+            echo '
+            configurations.all {
+                resolutionStrategy {
+                    force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+                    force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+                    force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+                }
+            }' >> android/app/build.gradle
+          fi
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
