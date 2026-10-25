@@ -29,8 +29,7 @@ jobs:
         npm install --legacy-peer-deps
         npm install @capacitor/core @capacitor/cli --legacy-peer-deps
 
-    - name: Generate Production Web Assets
-      run: |
+        - name: Generate Production Web Assets
          # This auto-creates a clean distribution target layout instantly
         mkdir -p dist
         
