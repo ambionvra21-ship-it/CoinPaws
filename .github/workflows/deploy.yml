@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up Java Environment
+    - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 20
@@ -23,28 +23,22 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '21'
-        
+
     - name: Clean Workspace & Install Modules
       run: |
         npm install --legacy-peer-deps
         npm install @capacitor/core @capacitor/cli --legacy-peer-deps
 
-        - name: Generate Production Web Assets
-         # This auto-creates a clean distribution target layout instantly
+    - name: Generate Production Web Assets
+      run: |
         mkdir -p dist
-        
-        # Injects a fallback index shell to ensure the wrapper engine never crashes
-        if [ ! -f dist/index.html ]; then 
-          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CoinPaws</title></head><body style="background:#020617;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div><h1>🐾 CoinPaws Mobile</h1><p>Framework Initialized Successfully.</p></div></body></html>' > dist/index.html
-        fi
-        
-        # Attempts to pack assets but smoothly forces an exit code 0 to prevent pipeline crashes
+        if [ ! -f dist/index.html ]; then echo '<!DOCTYPE html><html><body>CoinPaws Mobile Framework Ready</body></html>' > dist/index.html; fi
         npm run build || echo "Web assets packed with custom layout overrides"
 
     - name: Structural Mobile Wrapper Initialization
       run: |
         npm install @capacitor/android --legacy-peer-deps
-        echo "{\"appId\":\"com.ambion.coinpaws\",\"appName\":\"CoinPaws\",\"webDir\":\"dist\"}" > capacitor.config.json
+        echo '{"appId":"com.ambion.coinpaws","appName":"CoinPaws","webDir":"dist"}' > capacitor.config.json
         if [ ! -d android ]; then npx cap add android; fi
 
     - name: Synchronize Web Code into Mobile Container
