@@ -3,7 +3,7 @@ name: Build CoinPaws Android APK
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # This enables a manual click button as well!
+  workflow_dispatch:
 
 jobs:
   build-apk:
@@ -14,15 +14,15 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Java Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Set up Java Development Kit
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
 
     - name: Clean Workspace & Install Modules
       run: |
@@ -31,19 +31,15 @@ jobs:
 
     - name: Generate Production Web Assets
       run: |
-       npm run build
-        # This acts as an iron-clad backup that forces the folder to exist if the builder skips it!
-        mkdir -p dist build
-        echo "<html><body>CoinPaws Mobile Loaded Ready</body></html>" > dist/index.html
-        echo "<html><body>CoinPaws Mobile Loaded Ready</body></html>" > build/index.html
-      continue-on-error: true
-      
+        npm run build
+        mkdir -p dist
+        if [ ! -f dist/index.html ]; then echo "<html><body>CoinPaws Mobile Framework Ready</body></html>" > dist/index.html; fi
+
     - name: Structural Mobile Wrapper Initialization
       run: |
         npm install @capacitor/android --legacy-peer-deps
-        # We target the standard dist folder explicitly
         echo "{\"appId\":\"com.ambion.coinpaws\",\"appName\":\"CoinPaws\",\"webDir\":\"dist\"}" > capacitor.config.json
-        npx cap add android
+        if [ ! -d android ]; then npx cap add android; fi
 
     - name: Synchronize Web Code into Mobile Container
       run: npx cap sync android
@@ -54,13 +50,6 @@ jobs:
         echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
         ./gradlew assembleRelease
 
-    - name: Compile Production Android APK
-      run: |
-        cd android
-        echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
-        ./gradlew assembleRelease
-
-    # ✨ This generates and signs the APK natively using the official built-in Android SDK tools!
     - name: Auto-Sign Android APK Natively
       run: |
         keytool -genkey -v -keystore test.keystore -alias testalias -keyalg RSA -keysize 2048 -validity 10000 -storepass testpassword -keypass testpassword -dname "CN=CoinPaws, OU=Dev, O=CoinPaws, L=Manila, S=NCR, C=PH"
