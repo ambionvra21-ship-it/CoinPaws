@@ -32,8 +32,7 @@ jobs:
     - name: Generate Production Web Assets
       run: |
        mkdir -p dist
-        # We removed the override string so Vite packs your real screens!
-        npm run buildpass flag to prevent it from halting the run
+        npm run build
         
     - name: Structural Mobile Wrapper Initialization
       run: |
