@@ -31,16 +31,9 @@ jobs:
 
     - name: Generate Production Web Assets
       run: |
-       # 1. Force directories to exist immediately
-        mkdir -p dist build
-        echo '<!DOCTYPE html><html><head><title>CoinPaws</title></head><body><h1>🐾 CoinPaws Mobile Framework Ready</h1></body></html>' > dist/index.html
-        echo '{"appId":"com.ambion.coinpaws","appName":"CoinPaws","webDir":"dist"}' > capacitor.config.json
-        
-        # 2. Try compiling the user code assets safely
-        npm run build || echo "Web assets packed with structural layout overrides"
-        
-        # 3. Securely double-verify that the required target index file survived the builder run
-        if [ ! -f dist/index.html ]; then echo '<!DOCTYPE html><html><body>CoinPaws Mobile Framework Ready</body></html>' > dist/index.html; fi
+       mkdir -p dist
+        # We removed the hardcoded "Framework Ready" index page so your real code can take over!
+        npm run build
         
     - name: Structural Mobile Wrapper Initialization
       run: |
