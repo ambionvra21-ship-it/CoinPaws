@@ -44,6 +44,8 @@ jobs:
     - name: Compile Production Android APK
       run: |
         cd android
+        # This injects a build rule to eliminate the duplicate Kotlin library conflicts!
+        echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
         ./gradlew assembleRelease
 
     - name: Publish Downloadable APK Link
