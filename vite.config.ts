@@ -12,16 +12,9 @@ export default defineConfig(() => {
       },
     },
     build: {
-      outDir: 'dist',
-      emptyOutDir: true,
-      // 💡 This tells the bundler to ignore minor syntax warnings and pack your real app files!
-      chunkSizeWarningLimit: 2000,
-      reportCompressedSize: false,
-    },
-    // Prevent TypeScript warnings from halting production output
-    esbuild: {
-      logOverride: { 'this-is-undefined-in-esm': 'silent' },
-      ignoreAnnotations: true
+      // Ensure Vite outputs clean ESNext code without failing on Rolldown bindings
+      target: 'esnext',
+      minify: 'esbuild',
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
