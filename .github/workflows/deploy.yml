@@ -16,8 +16,8 @@ jobs:
     - name: Set up Java Environment
       uses: actions/setup-java@v4
       with:
-         distribution: 'temurin'
-         java-version: '21'
+        distribution: 'temurin'
+        java-version: '21'
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -38,7 +38,7 @@ jobs:
         npm install @capacitor/android --legacy-peer-deps
         npx cap add android
 
-        - name: Synchronize Web Code into Mobile Container
+    - name: Synchronize Web Code into Mobile Container
       run: npx cap sync android
 
     - name: Compile Production Android APK
