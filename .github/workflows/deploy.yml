@@ -35,7 +35,7 @@ jobs:
 
     - name: Structural Mobile Wrapper Initialization
       run: |
-         npx cap init CoinPaws com.ambion.coinpaws --web-dir=dist --confirm
+         npx cap init CoinPaws com.ambion.coinpaws --web-dir=dist
          npm install @capacitor/android --legacy-peer-deps
          npx cap add android
 
