@@ -47,20 +47,20 @@ jobs:
         echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
         ./gradlew assembleRelease
 
-    - name: Auto-Sign Android APK
-      id: sign_apk
-      uses: r0adkll/sign-android-release@v1
-      with:
-        releaseDirectory: android/app/build/outputs/apk/release
-        signingKeyBase64: ""
-        alias: testalias
-        keyStorePassword: testpassword
-        keyPassword: testpassword
-      env:
-        BUILD_TOOLS_VERSION: "34.0.0"
+    - name: Compile Production Android APK
+      run: |
+        cd android
+        echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
+        ./gradlew assembleRelease
+
+    # ✨ This generates and signs the APK natively using the official built-in Android SDK tools!
+    - name: Auto-Sign Android APK Natively
+      run: |
+        keytool -genkey -v -keystore test.keystore -alias testalias -keyalg RSA -keysize 2048 -validity 10000 -storepass testpassword -keypass testpassword -dname "CN=CoinPaws, OU=Dev, O=CoinPaws, L=Manila, S=NCR, C=PH"
+        $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks test.keystore --ks-key-alias testalias --ks-pass pass:testpassword --key-pass pass:testpassword --out android/app/build/outputs/apk/release/CoinPaws-Signed.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
 
     - name: Publish Downloadable APK Link
       uses: actions/upload-artifact@v4
       with:
         name: coinpaws-mobile-apk
-        path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+        path: android/app/build/outputs/apk/release/CoinPaws-Signed.apk
