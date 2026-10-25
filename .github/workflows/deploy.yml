@@ -1,7 +1,7 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch: # Enables the manual "Run workflow" button in GitHub Actions
+  workflow_dispatch:
   push:
     branches: [ main, master ]
 
@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Node dependencies
         run: npm install
