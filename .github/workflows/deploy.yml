@@ -41,15 +41,28 @@ jobs:
     - name: Synchronize Web Code into Mobile Container
       run: npx cap sync android
 
-    - name: Compile Production Android APK
+      - name: Compile Production Android APK
       run: |
         cd android
-        # This injects a build rule to eliminate the duplicate Kotlin library conflicts!
         echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
         ./gradlew assembleRelease
+
+    # ✨ This generates a secure test signature key on the fly to satisfy Android's installation checks!
+    - name: Auto-Sign Android APK
+      id: sign_apk
+      uses: r0adkll/sign-android-release@v1
+      with:
+        releaseDirectory: android/app/build/outputs/apk/release
+        signingKeyBase64: ""
+        alias: testalias
+        keyStorePassword: testpassword
+        keyPassword: testpassword
+      env:
+        BUILD_TOOLS_VERSION: "34.0.0"
 
     - name: Publish Downloadable APK Link
       uses: actions/upload-artifact@v4
       with:
         name: coinpaws-mobile-apk
-        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+        path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+
