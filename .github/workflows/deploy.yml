@@ -41,7 +41,7 @@ jobs:
     - name: Synchronize Web Code into Mobile Container
       run: npx cap sync android
 
-      - name: Compile Production Android APK
+    - name: Compile Production Android APK
       run: |
         cd android
         echo "configurations.all { resolutionStrategy.eachDependency { DependencyResolveDetails details -> if (details.requested.group == 'org.jetbrains.kotlin') { details.useVersion '1.8.22' } } }" >> app/build.gradle
@@ -65,4 +65,3 @@ jobs:
       with:
         name: coinpaws-mobile-apk
         path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
-
