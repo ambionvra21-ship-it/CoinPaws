@@ -1,470 +1,276 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, ArrowRight, ExternalLink, Share2 } from 'lucide-react';
-import { sound } from '../utils/sound';
-import { haptics } from '../utils/haptics';
-import { fireRewardConfetti } from '../utils/confetti';
-import { formatPhp } from '../utils/storage';
-import { Leaderboard } from './Leaderboard';
-import { DailyMissions } from './DailyMissions';
-import { DailyNewsTicker } from './DailyNewsTicker';
-import { DailyLuckyChest, ChestReward } from './DailyLuckyChest';
+import { 
+  Calendar, 
+  Coins, 
+  User, 
+  Menu, 
+  HelpCircle, 
+  ChevronRight, 
+  Play, 
+  TrendingUp, 
+  Award, 
+  Share2, 
+  Layers, 
+  Smartphone,
+  Navigation
+} from 'lucide-react';
 
-interface MainDashboardProps {
-  balancePhp: number;
-  targetThresholdPhp: number;
-  tapMineCount: number;
-  currentUserTotalEarned: number;
-  currentUserName: string;
-  stepsToday: number;
-  gamesPlayedToday: number;
-  adsWatchedToday: number;
-  hasClaimedCheckin: boolean;
-  claimedMissionIds: string[];
-  lastLuckyChestDate: string;
-  onTapMine: () => void;
-  onOpenCashOut: () => void;
-  onOpenShareEarnings: () => void;
-  onOpenMenu: () => void;
-  onOpenProfile: () => void;
-  onOpenDailyLogins: () => void;
-  onOpenWatchAd: () => void;
-  onOpenSpinWheel: () => void;
-  onOpenWalking: () => void;
-  onOpenScratchCards: () => void;
-  onOpenFruitTap: () => void;
-  onClaimMission: (missionId: string, phpReward: number, pawsReward: number, title: string) => void;
-  onClaimChest: (reward: ChestReward) => void;
-}
+export default function MainDashboard() {
+  // App Core Currencies & Rewards States
+  const [pawcoins, setPawcoins] = useState<number>(() => {
+    const saved = localStorage.getItem('coinpaws_balance');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  
+  const [walkingSteps, setWalkingSteps] = useState<number>(4250);
+  const [isMining, setIsMining] = useState<boolean>(false);
+  const [miningProgress, setMiningProgress] = useState<number>(0);
+  
+  // Daily Login Streak Tracking Configuration
+  const [canCheckIn, setCanCheckIn] = useState<boolean>(true);
+  const [currentStreak, setCurrentStreak] = useState<number>(3);
+  const [showNotification, setShowNotification] = useState<string>("Welcome back! Tap the Daily Check-in below to maintain your streak.");
 
-interface FloatingTap {
-  id: number;
-  x: number;
-  y: number;
-  text: string;
-}
-
-export const MainDashboard: React.FC<MainDashboardProps> = ({
-  balancePhp,
-  targetThresholdPhp,
-  tapMineCount,
-  currentUserTotalEarned,
-  currentUserName,
-  stepsToday,
-  gamesPlayedToday,
-  adsWatchedToday,
-  hasClaimedCheckin,
-  claimedMissionIds,
-  lastLuckyChestDate,
-  onTapMine,
-  onOpenCashOut,
-  onOpenShareEarnings,
-  onOpenMenu,
-  onOpenProfile,
-  onOpenDailyLogins,
-  onOpenWatchAd,
-  onOpenSpinWheel,
-  onOpenWalking,
-  onOpenScratchCards,
-  onOpenFruitTap,
-  onClaimMission,
-  onClaimChest,
-}) => {
-  const [floatingTaps, setFloatingTaps] = useState<FloatingTap[]>([]);
-  const [isMiningPressed, setIsMiningPressed] = useState(false);
-  const [nextId, setNextId] = useState(1);
-  const [currentTime, setCurrentTime] = useState('12:04 AM');
-
-  // Realistic Android clock
+  // Save balance automatically on updates
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      setCurrentTime(`${hours}:${minutes} ${ampm}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    localStorage.setItem('coinpaws_balance', pawcoins.toString());
+  }, [pawcoins]);
 
-  // Handle central "TAP TO MINE"
-  const handleTap = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
-    sound.playCoin();
-    haptics.tapMine();
-    setIsMiningPressed(true);
-    setTimeout(() => setIsMiningPressed(false), 150);
-
-    // Get click coordinates for floating reward text
-    let clientX = 0;
-    let clientY = 0;
-    if ('touches' in e && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if ('clientX' in e) {
-      clientX = e.clientX;
-      clientY = e.clientY;
+  // Simulated passive background mining ticks
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isMining) {
+      interval = setInterval(() => {
+        setMiningProgress((prev) => {
+          if (prev >= 100) {
+            setPawcoins(c => c + 15); // Award 15 pawcoins per completed run
+            return 0;
+          }
+          return prev + 5;
+        });
+      }, 1000);
     }
+    return () => clearInterval(interval);
+  }, [isMining]);
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const relX = clientX ? clientX - rect.left : rect.width / 2;
-    const relY = clientY ? clientY - rect.top : rect.height / 2;
+  const handleCheckIn = () => {
+    if (!canCheckIn) return;
+    setPawcoins(c => c + 50); // 50 Pawcoins daily bonus payout
+    setCurrentStreak(s => s + 1);
+    setCanCheckIn(false);
+    setShowNotification("🎉 50 Pawcoins claimed! Daily login streak updated successfully.");
+  };
 
-    const newFloat: FloatingTap = {
-      id: nextId,
-      x: relX,
-      y: relY,
-      text: '+₱0.01',
-    };
-
-    setNextId((prev) => prev + 1);
-    setFloatingTaps((prev) => [...prev.slice(-6), newFloat]);
-
-    onTapMine();
-
-    // Occasional confetti on milestones
-    if ((tapMineCount + 1) % 25 === 0) {
-      fireRewardConfetti(0.4);
+  const toggleMining = () => {
+    setIsMining(!isMining);
+    if(!isMining) {
+      setShowNotification("⛏️ Passive mining chest node initialized. Earning points automatically!");
     }
   };
 
-  // Clean up floating taps after animation
-  useEffect(() => {
-    if (floatingTaps.length === 0) return;
-    const timer = setTimeout(() => {
-      setFloatingTaps((prev) => prev.slice(1));
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [floatingTaps]);
-
-  // Threshold percentage
-  const thresholdPercent = Math.min(100, Math.max(3, (balancePhp / targetThresholdPhp) * 100));
-
   return (
-    <div className="w-full flex flex-col justify-start select-none">
-      {/* Android Top Status Bar */}
-      <div className="w-full px-5 pt-1.5 pb-1 flex items-center justify-between text-[11px] font-medium text-slate-300">
-        <span className="font-semibold text-slate-200">{currentTime}</span>
-        <div className="flex items-center gap-1.5 text-xs text-slate-300">
-          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">
-            Vo LTE
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none antialiased">
+      
+      {/* 📱 TOP BAR NAVIGATION BAR */}
+      <header className="bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 border-b border-slate-800/60 flex items-center justify-between">
+        <button className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+          <Menu className="w-6 " />
+        </button>
+        
+        <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800/80 shadow-inner">
+          <Coins className="w-5 h-5 text-amber-500 fill-amber-500/20" />
+          <span className="font-bold text-amber-400 tracking-wide font-mono text-sm">
+            {pawcoins} <span className="text-xs text-slate-500 font-sans font-medium">🐾</span>
           </span>
-          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">
-            4G LTE
-          </span>
-          <div className="flex items-center gap-0.5">
-            <span className="text-[10px] text-cyan-300 font-mono">21%</span>
-            <div className="w-4 h-2.5 rounded-xs border border-cyan-400 p-0.2 flex items-center">
-              <div className="h-full bg-cyan-400 w-1/4 rounded-2xs" />
-            </div>
+        </div>
+
+        <button className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+          <User className="w-6 h-6" />
+        </button>
+      </header>
+
+      {/* 📢 ROLLING TEXT MARQUEE LOG */}
+      {showNotification && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 overflow-hidden whitespace-nowrap">
+          <div className="inline-block animate-marquee text-xs font-medium text-amber-400">
+            {showNotification} &nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp; Conversion Index Rate: 1,000 Paws = $1.00 USD (₱58.00 PHP Tiers)
           </div>
         </div>
-      </div>
-
-      {/* Main Top Header Bar (Hamburger, Title, Profile Avatar) */}
-      <div className="px-4 py-2.5 flex items-center justify-between">
-        {/* Hamburger Menu */}
-        <button
-          onClick={() => {
-            sound.playClick();
-            onOpenMenu();
-          }}
-          className="w-10 h-10 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shadow-cyan-950/40"
-          title="Open Menu"
-        >
-          <Menu className="w-5 h-5 stroke-[2.2]" />
-        </button>
-
-        {/* Brand Title with Cyan Neon Glow */}
-        <h1 className="font-fredoka text-2xl font-bold tracking-normal bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(6,182,212,0.6)]">
-          MoneyPaws
-        </h1>
-
-        {/* Profile Avatar Button */}
-        <button
-          onClick={() => {
-            sound.playClick();
-            onOpenProfile();
-          }}
-          className="w-10 h-10 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shadow-cyan-950/40"
-          title="User Profile"
-        >
-          <User className="w-5 h-5 stroke-[2.2]" />
-        </button>
-      </div>
-
-      <div className="px-4 flex flex-col gap-3 mt-1">
-        {/* DAILY NEWS / UPDATES TICKER */}
-        <DailyNewsTicker />
-
-        {/* TOTAL EARNINGS BALANCE CARD */}
-        <div className="relative rounded-2xl bg-gradient-to-b from-slate-900/95 via-cyan-950/35 to-slate-900/95 border border-cyan-500/40 p-4 shadow-[0_0_20px_rgba(6,182,212,0.18)] overflow-hidden">
-          {/* Subtle cyan ambient highlight */}
-          <div className="absolute -top-10 left-1/4 w-40 h-20 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none" />
-
-          {/* Top row: Label + Balance on left, Cash Out button on right */}
-          <div className="flex items-start justify-between">
+      )}
+      {/* ⚙️ MAIN LAYOUT BODY */}
+      <main className="flex-1 p-4 space-y-4 max-w-md mx-auto w-full pb-24">
+        
+        {/* ⭐ WALKING PEDOMETER MILESTONE RADAR */}
+        <section className="bg-gradient-to-br from-slate-900 to-slate-950 p-4 rounded-2xl border border-slate-800/60 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl"></div>
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300/80">
-                TOTAL EARNINGS BALANCE
-              </span>
-              <div className="font-mono text-3xl font-extrabold text-cyan-400 tracking-tight drop-shadow-[0_0_15px_rgba(6,182,212,0.65)] mt-0.5">
-                {formatPhp(balancePhp)}
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Pedometer Step tracker</h2>
+              <p className="text-2xl font-black text-emerald-400 font-mono mt-0.5">{walkingSteps} <span className="text-xs font-sans text-slate-500 font-medium">/ 10,000 steps</span></p>
+            </div>
+            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden shadow-inner">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all duration-500" style={{ width: `${(walkingSteps/10000)*100}%` }}></div>
+          </div>
+          <div className="flex justify-between items-center mt-3 text-xs text-slate-400">
+            <span>Est. Earned: <strong className="text-amber-400 font-mono">+{Math.floor(walkingSteps / 100)} Paws</strong></span>
+            <span className="bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/50 font-mono text-[10px] text-slate-400">Active Sensors</span>
+          </div>
+        </section>
+
+        {/* ⛏️ CENTRAL PAW MINING INTERFACE BOX */}
+        <section className="bg-slate-900/40 backdrop-blur-sm py-8 px-4 rounded-3xl border border-slate-800/50 shadow-xl flex flex-col items-center justify-center text-center relative">
+          <div className="absolute top-4 left-4 bg-slate-950/80 px-2.5 py-1 rounded-full border border-slate-800/60 text-[10px] font-mono text-slate-400">
+            Status: {isMining ? <span className="text-cyan-400 animate-pulse">MINING</span> : <span className="text-slate-500">IDLE</span>}
+          </div>
+
+          {/* Glowing Target Ring Asset Container */}
+          <div className="relative mb-6 flex items-center justify-center">
+            {isMining && (
+              <div className="absolute w-36 h-36 border-2 border-dashed border-cyan-500/30 rounded-full animate-spin"></div>
+            )}
+            <div className={`w-28 h-28 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex flex-col items-center justify-center shadow-lg transition-transform ${isMining ? 'scale-105' : 'hover:scale-102'}`}>
+              <div className="flex items-center gap-1.5 text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] animate-float">
+                <span className="text-3xl select-none">🐾</span>
+                <span className="text-2xl select-none -mt-2">🐾</span>
               </div>
             </div>
+          </div>
 
-            {/* Buttons: Share Earnings & Cash Out */}
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  onOpenShareEarnings();
-                }}
-                className="p-2 rounded-xl bg-slate-950/90 hover:bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:text-white transition-all cursor-pointer active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.2)] flex items-center gap-1 text-xs font-bold"
-                title="Share Earnings Card"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Share</span>
-              </button>
+          <h2 className="text-lg font-bold text-white tracking-wide">CoinPaws Micro-Mining Portal</h2>
+          <p className="text-xs text-slate-400 max-w-xs mt-1.5 px-4">
+            Initialize your background processor engine node to securely mine passive revenue shares while traveling.
+          </p>
 
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  onOpenCashOut();
-                }}
-                className="px-3.5 py-2 rounded-xl bg-slate-950/90 hover:bg-cyan-950/80 border-2 border-cyan-400 text-white font-extrabold text-xs tracking-wide shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_22px_rgba(6,182,212,0.65)] active:scale-95 transition-all cursor-pointer"
-              >
-                Cash Out
-              </button>
+          {isMining && (
+            <div className="w-48 bg-slate-950 border border-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
+              <div className="bg-cyan-400 h-full transition-all duration-300" style={{ width: `${miningProgress}%` }}></div>
             </div>
-          </div>
+          )}
 
-          {/* Glowing Cyan Progress Bar */}
-          <div className="w-full bg-slate-950/90 h-2 rounded-full mt-3 overflow-hidden border border-slate-800 p-0.5">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-sky-400 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)] transition-all duration-500"
-              style={{ width: `${thresholdPercent}%` }}
-            />
-          </div>
+          <button 
+            onClick={toggleMining}
+            className={`mt-5 px-6 py-2.5 rounded-xl font-bold text-xs tracking-wider uppercase transition-all duration-200 transform shadow-md ${
+              isMining 
+                ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20' 
+                : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black hover:opacity-95 active:scale-98'
+            }`}
+          >
+            {isMining ? 'Halt Process' : 'Start Mining'}
+          </button>
+        </section>
 
-          {/* Subtext Underneath */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 font-medium">
-            <span>Next Target Threshold:</span>
-            <span className="font-mono text-cyan-300 font-bold flex items-center gap-1">
-              <span>{`P.${(balancePhp % 1).toFixed(2).slice(2) || '65'}/ ${targetThresholdPhp.toFixed(3)}`}</span>
-              <span className="text-cyan-400 text-xs">🐾</span>
-            </span>
-          </div>
-        </div>
-
-        {/* DAILY LUCKY CHEST (DISTINCT DAILY MYSTERY DROP) */}
-        <DailyLuckyChest
-          lastLuckyChestDate={lastLuckyChestDate}
-          onClaimChest={onClaimChest}
-          onOpenWatchAd={onOpenWatchAd}
-        />
-
-        {/* SCROLLING MARQUEE BANNER */}
-        <div className="rounded-xl bg-slate-950/70 border border-slate-800/80 px-3 py-1.5 overflow-hidden shadow-inner flex flex-col">
-          <div className="whitespace-nowrap overflow-hidden flex items-center text-xs font-semibold text-slate-300">
-            <div className="inline-block animate-[marquee_18s_linear_infinite] flex items-center gap-3">
-              <span className="text-cyan-400">|</span>
-              <span className="text-slate-200">ADS REWARDS</span>
-              <span className="text-cyan-400">•</span>
-              <span className="text-slate-200">🚶 WALKING STEPS</span>
-              <span className="text-cyan-400">•</span>
-              <span className="text-slate-200">ONE WALLET</span>
-              <span className="text-cyan-400">•</span>
-              <span className="text-amber-300">FRUIT TAP REWARDS</span>
-              <span className="text-cyan-400">•</span>
-              <span className="text-slate-200">LUCKY SPINS</span>
-              <span className="text-cyan-400">•</span>
-              <span className="text-emerald-300">DAILY PASSIVE CASH</span>
-              <span className="text-cyan-400">•</span>
+        {/* 📆 UPDATE AREA: ENGAGEMENT STREAK CARD FEATURE */}
+        <section 
+          onClick={handleCheckIn}
+          className={`p-4 rounded-2xl border transition-all duration-300 shadow-md flex items-center justify-between cursor-pointer ${
+            canCheckIn 
+              ? 'bg-slate-900 border-amber-500/40 hover:border-amber-500/60 shadow-amber-500/5' 
+              : 'bg-slate-900/40 border-slate-800/80 opacity-75'
+          }`}
+        >
+          <div className="flex items-center gap-3.5">
+            {/* 💡 TARGET REFINEMENT: Injected conditional breathing CSS keyframe animation framework */}
+            <div className={`p-3 rounded-xl border transition-all ${
+              canCheckIn 
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 animate-pulse-subtle filter drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]' 
+                : 'bg-slate-950 border-slate-800 text-slate-500'
+            }`}>
+              <Calendar className="w-6 h-6" />
             </div>
-          </div>
-          <span className="text-[9px] text-slate-500 mt-0.5">Banner requested...</span>
-        </div>
-
-        {/* HERO CENTER CARD: TAP TO MINE */}
-        <div id="mine-section" className="relative rounded-2xl bg-gradient-to-b from-slate-900/90 via-cyan-950/30 to-slate-900/90 border border-cyan-500/40 p-5 shadow-[0_0_25px_rgba(6,182,212,0.18)] flex flex-col items-center justify-center overflow-hidden scroll-mt-6">
-          {/* Subtle cyan ring glow */}
-          <div className="absolute w-52 h-52 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-
-          {/* Central Circular Glowing Button */}
-          <div className="relative">
-            {/* Ambient Star Sparkle / Flare on upper right edge */}
-            <div className="absolute -top-1.5 -right-1.5 z-20 pointer-events-none text-cyan-200 animate-pulse">
-              <Sparkles className="w-5 h-5 filter drop-shadow-[0_0_8px_#38bdf8]" />
-            </div>
-
-            <button
-              onClick={handleTap}
-              className={`relative w-36 h-36 rounded-full bg-gradient-to-b from-cyan-500/30 via-slate-950 to-cyan-950/80 border-2 border-cyan-400/80 shadow-[0_0_35px_rgba(6,182,212,0.5)] flex flex-col items-center justify-center transition-all cursor-pointer select-none active:scale-92 ${
-                isMiningPressed ? 'scale-95 shadow-[0_0_45px_rgba(6,182,212,0.85)] border-cyan-300' : 'hover:scale-102'
-              }`}
-            >
-              {/* Internal Cyan Circle Glow */}
-              <div className="w-28 h-28 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex flex-col items-center justify-center">
-                {/* Two Cute Cyan Paw Prints */}
-                <div className="flex items-center gap-1.5 text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] animate-float">
-                  <span className="text-3xl select-none">🐾</span>
-                  <span className="text-2xl select-none -mt-2">🐾</span>
-                </div>
-              </div>
-
-              {/* Floating Tap Text */}
-              {floatingTaps.map((f) => (
-                <span
-                  key={f.id}
-                  style={{ left: `${f.x}px`, top: `${f.y}px` }}
-                  className="absolute font-mono font-extrabold text-sm text-cyan-300 drop-shadow-[0_0_6px_rgba(6,182,212,0.9)] pointer-events-none -translate-x-1/2 -translate-y-8 animate-out fade-out slide-out-to-top duration-700"
-                >
-                  {f.text}
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-slate-100">Daily Login Streak Bonus</h3>
+                <span className="bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20 font-mono">
+                  {currentStreak} Days
                 </span>
-              ))}
-            </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {canCheckIn ? "Claim your daily check-in bonus now!" : "Streak successfully preserved. Return tomorrow!"}
+              </p>
+            </div>
           </div>
-
-          {/* TAP TO MINE Text Underneath */}
-          <span className="mt-3.5 font-fredoka font-bold text-base tracking-wider text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.7)] uppercase">
-            TAP TO MINE
-          </span>
-          <span className="text-[10px] text-slate-400 mt-0.5">
-            Taps Today: <strong className="text-cyan-300 font-mono">{tapMineCount}</strong> • Micro-payouts credited
-          </span>
-        </div>
-
-        {/* 6 ACTION GRID CARDS (2 Columns x 3 Rows) */}
-        <div className="grid grid-cols-2 gap-2.5 pb-6">
-          {/* Card 1: Daily Logins */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenDailyLogins();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-2xl">📅</span>
-              <span className="text-[10px] font-bold text-cyan-300 -ml-1">17</span>
+          {canCheckIn && (
+            <ChevronRight className="w-5 h-5 text-amber-400 animate-bounce-x" />
+          )}
+        </section>
+        {/* 🎮 MONEYPAWS ARCADE FEATURES SELECTION ENGINE GRID */}
+        <section className="space-y-2">
+          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Earn Tasks Grid Matrix</h4>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {/* watch ads interaction card */}
+            <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800/60 hover:border-slate-700/50 transition-all flex flex-col justify-between h-28 group relative">
+              <div className="flex justify-between items-start text-slate-400">
+                <Play className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                <span className="text-[10px] font-mono bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">Limit: 5/5</span>
+              </div>
+              <div>
+                <h5 className="text-xs font-bold text-slate-200">Watch & Earn</h5>
+                <p className="text-[10px] text-slate-500 mt-0.5">Sponsor Video Modules</p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Daily Logins
-            </span>
-          </button>
 
-          {/* Card 2: Watch Rewarded Ad */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenWatchAd();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-              📺
+            {/* lucky spin wheel option element */}
+            <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800/60 hover:border-slate-700/50 transition-all flex flex-col justify-between h-28 group">
+              <div className="flex justify-between items-start text-slate-400">
+                <Award className="w-5 h-5 text-purple-400 group-hover:rotate-45 transition-transform" />
+                <span className="text-[10px] font-mono bg-purple-500/10 border border-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded">Capped 5x</span>
+              </div>
+              <div>
+                <h5 className="text-xs font-bold text-slate-200">Lucky Spin Wheel</h5>
+                <p className="text-[10px] text-slate-500 mt-0.5">Randomized Multipliers</p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Watch Rewarded Ad
-            </span>
-          </button>
 
-          {/* Card 3: Spin the Wheel */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenSpinWheel();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-              🎡
+            {/* scratch cards interaction grid block */}
+            <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800/60 hover:border-slate-700/50 transition-all flex flex-col justify-between h-28 group">
+              <div className="flex justify-between items-start text-slate-400">
+                <Layers className="w-5 h-5 text-pink-400" />
+                <span className="text-[10px] font-mono bg-pink-500/10 border border-pink-500/20 text-pink-400 px-1.5 py-0.5 rounded">Hot Drop</span>
+              </div>
+              <div>
+                <h5 className="text-xs font-bold text-slate-200">Lucky Scratcher</h5>
+                <p className="text-[10px] text-slate-500 mt-0.5">Touch Scratch Overlays</p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Spin the Wheel
-            </span>
-          </button>
 
-          {/* Card 4: Walking Steps */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenWalking();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-              🚶
+            {/* referral system interaction module */}
+            <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800/60 hover:border-slate-700/50 transition-all flex flex-col justify-between h-28 group">
+              <div className="flex justify-between items-start text-slate-400">
+                <Share2 className="w-5 h-5 text-orange-400" />
+                <span className="text-[10px] font-mono bg-orange-500/10 border border-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded">Invite</span>
+              </div>
+              <div>
+                <h5 className="text-xs font-bold text-slate-200">Referral Network</h5>
+                <p className="text-[10px] text-slate-500 mt-0.5">V98HAR Code Bonus</p>
+              </div>
             </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Walking Steps
-            </span>
-          </button>
 
-          {/* Card 5: Scratch & Win Paws */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenScratchCards();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-              🎟️
-            </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Scratch & Win Paws
-            </span>
-          </button>
+          </div>
+        </section>
 
-          {/* Card 6: Fruit Tap */}
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenFruitTap();
-            }}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-cyan-950/20 hover:to-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.1)] flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-96 group min-h-[88px]"
-          >
-            <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-              🍉
-            </div>
-            <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
-              Fruit Tap
-            </span>
-          </button>
-        </div>
+      </main>
 
-        {/* Daily Missions Component */}
-        <div id="missions-section" className="pb-1 scroll-mt-4">
-          <DailyMissions
-            stepsToday={stepsToday}
-            gamesPlayedToday={gamesPlayedToday}
-            tapMineCount={tapMineCount}
-            adsWatchedToday={adsWatchedToday}
-            hasClaimedCheckin={hasClaimedCheckin}
-            claimedMissionIds={claimedMissionIds}
-            onClaimMission={onClaimMission}
-            onOpenWalking={onOpenWalking}
-            onOpenGames={onOpenFruitTap}
-            onOpenWatchAd={onOpenWatchAd}
-            onOpenDailyLogins={onOpenDailyLogins}
-            onScrollToMine={() => {
-              document.getElementById('mine-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          />
-        </div>
+      {/* 🧭 BOTTOM FOOTER GRID NAVIGATION MENU BAR */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800/80 px-4 py-2.5 z-50 flex items-center justify-around max-w-md mx-auto rounded-t-2xl shadow-2xl">
+        <button className="flex flex-col items-center gap-1 text-cyan-400">
+          <Smartphone className="w-5 h-5" />
+          <span className="text-[10px] font-bold tracking-wide">Dashboard</span>
+        </button>
+        <button className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+          <Navigation className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Payouts</span>
+        </button>
+        <button className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+          <HelpCircle className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Guidelines</span>
+        </button>
+      </footer>
 
-        {/* Live Top 10 Earners Leaderboard */}
-        <div id="leaderboard-section" className="pb-4 scroll-mt-4">
-          <Leaderboard
-            currentUserTotalEarned={currentUserTotalEarned}
-            currentUserName={currentUserName}
-            onOpenProfile={onOpenProfile}
-          />
-        </div>
-      </div>
     </div>
   );
-};
+}
