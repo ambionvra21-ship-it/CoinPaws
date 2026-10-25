@@ -26,8 +26,8 @@ jobs:
 
     - name: Clean Workspace & Install Modules
       run: |
-        npm install
-        npm install @capacitor/core @capacitor/cli
+        npm install --legacy-peer-deps
+        npm install @capacitor/core @capacitor/cli --legacy-peer-deps
 
     - name: Generate Production Web Assets
       run: npm run build
