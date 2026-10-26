@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { loadUserState, saveUserState, formatPhp } from './utils/storage';
+import { loadUserState, saveUserState } from './utils/storage';
 import { UserState, Transaction } from './types';
 import { sound } from './utils/sound';
 import { haptics } from './utils/haptics';
@@ -14,6 +14,7 @@ import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
 export default function App() {
+
   const [state, setState] = useState<UserState>(() => loadUserState());
   const [activeModal, setActiveModal] = useState<
     | null
