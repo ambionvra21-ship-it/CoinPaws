@@ -13,18 +13,60 @@ import { MenuDrawer } from './components/MenuDrawer';
 import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
+// Baseline fallback layout block if native storage handles fail on startup
+const initialFallbackState: UserState = {
+  username: "Player",
+  balancePhp: 0.00,
+  totalEarnedPhp: 0.00,
+  referralEarningsPhp: 0.00,
+  tapMineCount: 0,
+  stepsToday: 0,
+  gamesPlayedToday: 0,
+  adsWatchedToday: 0,
+  consecutiveDays: 0,
+  lastCheckinDate: "",
+  freeSpins: 5,
+  freeScratchCards: 5,
+  claimedMissionIds: [],
+  lastLuckyChestDate: "",
+  personalGoals: [],
+  triviaAnsweredDate: "",
+  soundEnabled: true
+};
+
 export default function App() {
-  const [state, setState] = useState<UserState>(() => loadUserState());
+  const [state, setState] = useState<UserState>(initialFallbackState);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'cashout' | 'dailyLogins' | 'watchAd' | 'walking' | 'menu' | 'profile' | 'shareEarnings'>(null);
 
+  // SAFE STORAGE HYDRATION ON MOUNT (Bypasses Native Android Startup Exceptions)
   useEffect(() => {
-    sound.enabled = state.soundEnabled;
-    haptics.enabled = state.soundEnabled;
-  }, [state.soundEnabled]);
+    try {
+      const savedData = loadUserState();
+      if (savedData) {
+        setState(savedData);
+      }
+    } catch (e) {
+      console.error("Local storage load blocked or failed:", e);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
 
   useEffect(() => {
-    saveUserState(state);
-  }, [state]);
+    if (!isHydrated) return;
+    sound.enabled = state.soundEnabled;
+    haptics.enabled = state.soundEnabled;
+  }, [state.soundEnabled, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      saveUserState(state);
+    } catch (e) {
+      console.error("Local storage sync failed:", e);
+    }
+  }, [state, isHydrated]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -92,7 +134,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-start pb-8">
       <MainDashboard
         balancePhp={state.balancePhp}
-        targetThresholdPhp={state.targetThresholdPhp}
+        targetThresholdPhp={state.targetThresholdPhp || 100}
         tapMineCount={state.tapMineCount}
         currentUserTotalEarned={state.totalEarnedPhp}
         currentUserName={state.username}
@@ -100,8 +142,8 @@ export default function App() {
         gamesPlayedToday={state.gamesPlayedToday}
         adsWatchedToday={state.adsWatchedToday}
         hasClaimedCheckin={hasClaimedCheckin}
-        claimedMissionIds={state.claimedMissionIds}
-        lastLuckyChestDate={state.lastLuckyChestDate}
+        claimedMissionIds={state.claimedMissionIds || []}
+        lastLuckyChestDate={state.lastLuckyChestDate || ''}
         personalGoals={state.personalGoals || []}
         triviaAnsweredDate={state.triviaAnsweredDate || ''}
         onTapMine={handleTapMine}
