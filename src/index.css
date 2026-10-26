@@ -4,6 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100;
+    background-color: #020617; /* forces slate-950 background immediately */
+    color: #f8fafc; /* forces slate-100 text */
   }
 }
