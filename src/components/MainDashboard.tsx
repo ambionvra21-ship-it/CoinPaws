@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from "lucide-react";
 
-import sound from "../utils/sound";
-import haptics from "../utils/haptics";
-import fireRewardConfetti from "../utils/confetti";
+import { sound } from "../utils/sound";
+import { haptics } from "../utils/haptics";
+import { fireRewardConfetti } from "../utils/confetti";
 import { formatPhp } from "../utils/storage";
 
 import { Leaderboard } from "./Leaderboard";
