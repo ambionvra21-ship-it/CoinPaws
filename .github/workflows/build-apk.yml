@@ -33,9 +33,12 @@ jobs:
       - name: Build Web Assets
         run: npm run build
 
-      - name: Force Create and Add Android Platform
+      - name: Clean and Recreate Android Platform
         run: |
-          # Ensure Capacitor creates the platform structural assets cleanly from scratch
+          # Force remove any broken or partial pre-existing android directories
+          rm -rf android
+          
+          # Initialize a brand-new, clean native platform structure
           npx cap add android
 
       - name: Sync Web Assets to Android
