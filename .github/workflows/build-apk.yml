@@ -33,9 +33,13 @@ jobs:
       - name: Build Web Assets
         run: npm run build
 
-      - name: Add Android Platform & Capacitor Sync
+      - name: Force Create and Add Android Platform
         run: |
-          npx cap add android || true
+          # Ensure Capacitor creates the platform structural assets cleanly from scratch
+          npx cap add android
+
+      - name: Sync Web Assets to Android
+        run: |
           npx cap sync android
 
       - name: Inject AdMob App ID safely via Node
