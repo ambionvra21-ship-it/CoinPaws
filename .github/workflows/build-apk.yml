@@ -35,39 +35,33 @@ jobs:
 
       - name: Clean and Recreate Android Platform
         run: |
-          # Force remove any broken or partial pre-existing android directories
           rm -rf android
-          
-          # Initialize a brand-new, clean native platform structure
           npx cap add android
 
       - name: Sync Web Assets to Android
         run: |
           npx cap sync android
 
-      - name: Inject AdMob App ID safely via Node
+      - name: Safe Native Manifest AdMob Injection
         run: |
           node -e "
           const fs = require('fs');
           const path = require('path');
-          
           const manifestPath = path.join('android', 'app', 'src', 'main', 'AndroidManifest.xml');
           
           if (!fs.existsSync(manifestPath)) {
-            console.error('ERROR: Android Manifest file not found at: ' + manifestPath);
+            console.error('ERROR: AndroidManifest.xml not found!');
             process.exit(1);
           }
           
           let content = fs.readFileSync(manifestPath, 'utf8');
-          const metaData = '<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"ca-app-pub-6655685917040449~5170056805\"/>';
           
-          if (!content.includes('com.google.android.gms.ads.APPLICATION_ID')) {
-            content = content.replace('</application>', '    ' + metaData + '\n    </application>');
-            fs.writeFileSync(manifestPath, content, 'utf8');
-            console.log('Successfully injected AdMob App ID!');
-          } else {
-            console.log('AdMob App ID already present in Manifest.');
-          }
+          // Cleanly inject both required AdMob initialization nodes safely inside the native application scope
+          const adMobMeta = '\n        <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"ca-app-pub-6655685917040449~5170056805\"/>\n        <meta-data android:name=\"com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT\" android:value=\"true\"/>';
+          
+          content = content.replace('</application>', adMobMeta + '\n    </application>');
+          fs.writeFileSync(manifestPath, content, 'utf8');
+          console.log('Successfully injected native AdMob components!');
           "
 
       - name: Build APK with Gradle
