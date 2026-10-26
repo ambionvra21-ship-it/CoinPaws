@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, ArrowRight, ExternalLink, Share2 } from 'lucide-react';
-import { sound } from '../utils/sound';
-import { haptics } from '../utils/haptics';
-import { fireRewardConfetti } from '../utils/confetti';
+import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from 'lucide-react';
+
+// FIX: Removed curly braces to match your project's default exports
+import sound from '../utils/sound';
+import haptics from '../utils/haptics';
+import fireRewardConfetti from '../utils/confetti';
 import { formatPhp } from '../utils/storage';
+
 import { Leaderboard } from './Leaderboard';
 import { DailyMissions } from './DailyMissions';
 import { DailyNewsTicker } from './DailyNewsTicker';
