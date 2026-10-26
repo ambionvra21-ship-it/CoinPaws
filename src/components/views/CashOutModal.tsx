@@ -95,10 +95,9 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
             </div>
           )}
 
-          <div>
+                   <div>
             <label className="text-[11px] font-bold text-slate-300 block mb-2">Select Payout Amount</label>
             <div className="grid grid-cols-3 gap-2">
-              {/* FIX: Hardcoded target tiers matrix into the markup loop to avoid empty variable binding errors */}
               {[10, 20, 50, 100, 200, 300, 400, 500, 1000].map((tier) => {
                 const isLocked = balancePhp < tier;
                 return (
@@ -108,7 +107,11 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
                     disabled={isLocked}
                     onClick={() => setWithdrawAmount(tier)}
                     className={`p-2.5 rounded-xl border font-mono text-sm text-center ${
-                      withdrawAmount === tier ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold' : isLocked ? 'bg-slate-950/10 text-slate-700 border-slate-900/40 line-through' : 'bg-slate-950/40 border-slate-800 text-slate-300'
+                      withdrawAmount === tier 
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold' 
+                        : isLocked 
+                        ? 'bg-slate-950/10 text-slate-700 border-slate-900/40 line-through' 
+                        : 'bg-slate-950/40 border-slate-800 text-slate-300'
                     }`}
                   >
                     ₱{tier}
@@ -117,29 +120,3 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
               })}
             </div>
           </div>
-
-          <div>
-            <label className="text-[11px] font-bold text-slate-300 block mb-1.5">{selectedMethod === 'PAYPAL' ? 'PayPal Email Address' : 'Account Mobile Number / Details'}</label>
-            <input
-              type={selectedMethod === 'PAYPAL' ? 'email' : 'text'}
-              required
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder={selectedMethod === 'PAYPAL' ? 'example@paypal.com' : 'e.g., 0927XXXXXXX'}
-              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
-            />
-          </div>
-
-          <div className="pt-2">
-            <button type="submit" className="w-full h-12 bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 rounded-xl font-bold flex items-center justify-center gap-2">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Submit Cash Out Request</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
-
-      </div>
-    </div>
-  );
-};
