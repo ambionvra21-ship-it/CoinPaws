@@ -24,6 +24,7 @@
 }
 
 /* Pauses scrolling when a user presses down or interacts with it */
-.animate-marquee:hover, .animate-marquee:active {
+.animate-marquee:hover, 
+.animate-marquee:active {
   animation-play-state: paused;
 }
