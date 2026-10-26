@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from "lucide-react";
-
-import { sound } from "../utils/sound";
-import { haptics } from "../utils/haptics";
-import { fireRewardConfetti } from "../utils/confetti";
-import { formatPhp } from "../utils/storage";
-
-import { Leaderboard } from "./Leaderboard";
-import { DailyMissions } from "./DailyMissions";
-import DailyNewsTicker from "./DailyNewsTicker"; // FIX: Removed curly braces to match default export style
-import { DailyLuckyChest, ChestReward } from "./DailyLuckyChest";
-import { DailyProgressRing } from "./DailyProgressRing";
-import { DailyTriviaQuiz } from "./DailyTriviaQuiz";
-import { PersonalGoalTracker } from "./PersonalGoalTracker";
-import { PersonalGoal } from "../types";
-
+import React, { useState, useEffect } from 'react';
+import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from 'lucide-react';
+import sound from '../utils/sound';
+import haptics from '../utils/haptics';
+import fireRewardConfetti from '../utils/confetti';
+import { formatPhp } from '../utils/storage';
+import { Leaderboard } from './Leaderboard';
+import { DailyMissions } from './DailyMissions';
+import DailyNewsTicker from './DailyNewsTicker';
+import { DailyLuckyChest, ChestReward } from './DailyLuckyChest';
+import { DailyProgressRing } from './DailyProgressRing';
+import { DailyTriviaQuiz } from './DailyTriviaQuiz';
+import { PersonalGoalTracker } from './PersonalGoalTracker';
+import { PersonalGoal } from '../types';
 
 interface MainDashboardProps {
   balancePhp: number;
@@ -95,7 +92,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
   const [nextId, setNextId] = useState(1);
   const [currentTime, setCurrentTime] = useState('12:04 AM');
 
-  // Realistic Android clock
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -109,7 +105,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
     const interval = setInterval(updateTime, 10000);
     return () => clearInterval(interval);
   }, []);
-  // Handle central "TAP TO MINE"
   const handleTap = (e: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
     sound.playCoin();
     haptics.tapMine();
@@ -119,8 +114,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
     let clientX = 0;
     let clientY = 0;
     if ('touches' in e && e.touches.length > 0) {
-      clientX = e.touches.clientX;
-      clientY = e.touches.clientY;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else if ('clientX' in e) {
       clientX = e.clientX;
       clientY = e.clientY;
@@ -163,12 +158,8 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
       <div className="w-full px-5 pt-1.5 pb-1 flex items-center justify-between text-[11px] font-medium text-slate-300">
         <span className="font-semibold text-slate-200">{currentTime}</span>
         <div className="flex items-center gap-1.5 text-xs text-slate-300">
-          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">
-            Vo LTE
-          </span>
-          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">
-            4G LTE
-          </span>
+          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">Vo LTE</span>
+          <span className="text-[9px] font-mono font-bold bg-slate-800/80 px-1 py-0.2 rounded text-cyan-300">4G LTE</span>
           <div className="flex items-center gap-0.5">
             <span className="text-[10px] text-cyan-300 font-mono">21%</span>
             <div className="w-4 h-2.5 rounded-xs border border-cyan-400 p-0.2 flex items-center">
@@ -178,69 +169,56 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Header Bar */}
-      <div className="px-4 py-2.5 flex items-center justify-between">
+      {/* Main Top Header Bar with Professional Logo Integration */}
+      <div className="px-4 py-3 flex items-center justify-between gap-3">
         <button
-          onClick={() => {
-            sound.playClick();
-            onOpenMenu();
-          }}
-          className="w-10 h-10 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shadow-cyan-950/40"
-          title="Open Menu"
+          onClick={() => { sound.playClick(); onOpenMenu(); }}
+          className="w-10 h-10 shrink-0 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-md"
         >
           <Menu className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        <h1 className="font-fredoka text-2xl font-bold tracking-normal bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(6,182,212,0.6)]">
-          MoneyPaws
-        </h1>
+        {/* Stylish Modern Brand Logo Wrapper */}
+        <div className="flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-950/40 border border-slate-800/60 rounded-2xl flex-1 max-w-[240px]">
+          <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.4)] animate-pulse">
+            <Sparkles className="w-4 h-4 fill-slate-950 stroke-none" />
+          </div>
+          <div className="flex flex-col items-start leading-none">
+            <span className="font-fredoka text-base font-black tracking-wide bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]">
+              MoneyPaws
+            </span>
+            <span className="text-[8px] font-bold text-cyan-400/60 font-sans tracking-widest uppercase mt-0.5">
+              Secure Eco-System
+            </span>
+          </div>
+        </div>
 
         <button
-          onClick={() => {
-            sound.playClick();
-            onOpenProfile();
-          }}
-          className="w-10 h-10 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-md shadow-cyan-950/40"
-          title="User Profile"
+          onClick={() => { sound.playClick(); onOpenProfile(); }}
+          className="w-10 h-10 shrink-0 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-400 flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-md"
         >
           <User className="w-5 h-5 stroke-[2.2]" />
         </button>
       </div>
-
       <div className="px-4 flex flex-col gap-3 mt-1">
+        {/* Dynamic Moving News Marquee */}
         <DailyNewsTicker />
 
-        {/* TOTAL EARNINGS CARD */}
+        {/* TOTAL EARNINGS BALANCE CARD */}
         <div className="relative rounded-2xl bg-gradient-to-b from-slate-900/95 via-cyan-950/35 to-slate-900/95 border border-cyan-500/40 p-4 shadow-[0_0_20px_rgba(6,182,212,0.18)] overflow-hidden">
           <div className="absolute -top-10 left-1/4 w-40 h-20 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300/80">
-                TOTAL EARNINGS BALANCE
-              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300/80">TOTAL EARNINGS BALANCE</span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-3xl font-black text-slate-100 font-sans tracking-tight">
-                  {formatPhp(balancePhp)}
-                </span>
+                <span className="text-3xl font-black text-slate-100 font-sans tracking-tight">{formatPhp(balancePhp)}</span>
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  onOpenShareEarnings();
-                }}
-                className="w-9 h-9 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-300 active:scale-95 transition-all"
-              >
+              <button onClick={() => { sound.playClick(); onOpenShareEarnings(); }} className="w-9 h-9 rounded-lg bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-300 active:scale-95 transition-all">
                 <Share2 className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  onOpenCashOut();
-                }}
-                className="px-4 h-9 font-sans font-bold text-sm bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 rounded-lg shadow-md shadow-cyan-500/20 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
-              >
+              <button onClick={() => { sound.playClick(); onOpenCashOut(); }} className="px-4 h-9 font-sans font-bold text-sm bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 rounded-lg shadow-md shadow-cyan-500/20 active:scale-95 transition-all flex items-center gap-1.5">
                 Cash Out
               </button>
             </div>
@@ -248,70 +226,42 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
 
           <div className="mt-4 pt-3 border-t border-slate-800/60">
             <div className="w-full bg-slate-950/80 rounded-full h-1.5 p-0.5 border border-slate-800/50">
-              <div
-                className="bg-gradient-to-r from-cyan-500 via-sky-400 to-cyan-300 h-full rounded-full transition-all duration-500 relative"
-                style={{ width: `${thresholdPercent}%` }}
-              >
-                <div className="absolute -right-1.5 -top-1 w-2.5 h-2.5 rounded-full bg-cyan-200 animate-pulse shadow-md shadow-cyan-400" />
+              <div className="bg-gradient-to-r from-cyan-500 via-sky-400 to-cyan-300 h-full rounded-full transition-all duration-500 relative" style={{ width: `${thresholdPercent}%` }}>
+                <div className="absolute -right-1.5 -top-1 w-2.5 h-2.5 rounded-full bg-cyan-200 animate-pulse" />
               </div>
             </div>
             <div className="flex justify-between items-center text-[10px] mt-2 font-medium text-slate-400">
               <span>Next Target Threshold:</span>
-              <span className="font-bold text-cyan-300 font-mono">
-                {formatPhp(balancePhp)} / {formatPhp(targetThresholdPhp)}
-              </span>
+              <span className="font-bold text-cyan-300 font-mono">{formatPhp(balancePhp)} / {formatPhp(targetThresholdPhp)}</span>
             </div>
           </div>
         </div>
+
         {/* FEATURES GRID LINKS */}
         <div className="grid grid-cols-2 gap-3 mt-1">
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenDailyLogins();
-            }}
-            className="group relative p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95 overflow-hidden"
-          >
+          <button onClick={() => { sound.playClick(); onOpenDailyLogins(); }} className="group relative p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95 overflow-hidden">
             {!hasClaimedCheckin && (
               <span className="absolute top-3 right-3 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
               </span>
             )}
-            <div className={`p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-cyan-400 mb-2.5 ${
-              !hasClaimedCheckin ? 'animate-breathe' : 'group-hover:scale-105 transition-transform'
-            }`}>
+            <div className={`p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-cyan-400 mb-2.5 ${!hasClaimedCheckin ? 'animate-breathe' : 'group-hover:scale-105 transition-transform'}`}>
               <Calendar className="w-5 h-5 stroke-[2.2]" />
             </div>
             <span className="text-xs font-bold text-slate-200 tracking-wide">Daily Check-In</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">
-              {!hasClaimedCheckin ? 'Claim Reward!' : 'Done Today'}
-            </span>
+            <span className="text-[10px] text-slate-400 mt-0.5">{!hasClaimedCheckin ? 'Claim Reward!' : 'Done Today'}</span>
           </button>
 
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenWatchAd();
-            }}
-            className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95"
-          >
+          <button onClick={() => { sound.playClick(); onOpenWatchAd(); }} className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95">
             <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-cyan-400 mb-2.5 group-hover:scale-105 transition-transform">
               <Tv className="w-5 h-5 stroke-[2.2]" />
             </div>
             <span className="text-xs font-bold text-slate-200 tracking-wide">Watch & Earn</span>
-            <span className="text-[10px] text-cyan-400/80 mt-0.5 font-semibold font-mono">
-              {adsWatchedToday} Watched
-            </span>
+            <span className="text-[10px] text-cyan-400/80 mt-0.5 font-semibold font-mono">{adsWatchedToday} Watched</span>
           </button>
 
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenWalking();
-            }}
-            className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95"
-          >
+          <button onClick={() => { sound.playClick(); onOpenWalking(); }} className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95">
             <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-cyan-400 mb-2.5 group-hover:scale-105 transition-transform">
               <Footprints className="w-5 h-5 stroke-[2.2]" />
             </div>
@@ -319,13 +269,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
             <span className="text-[10px] text-slate-400 mt-0.5 font-mono">{stepsToday} Steps</span>
           </button>
 
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenSpinWheel();
-            }}
-            className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95"
-          >
+          <button onClick={() => { sound.playClick(); onOpenSpinWheel(); }} className="group p-4 flex flex-col items-center justify-center bg-slate-900/40 hover:bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl transition-all cursor-pointer active:scale-95">
             <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-cyan-400 mb-2.5 group-hover:scale-105 transition-transform">
               <RefreshCw className="w-5 h-5 stroke-[2.2]" />
             </div>
@@ -333,7 +277,6 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
             <span className="text-[10px] text-slate-400 mt-0.5">Test Your Luck</span>
           </button>
         </div>
-
         {/* PAW MINING INTERACTIVE SECTION AREA */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-4 flex flex-col items-center mt-1 relative overflow-hidden">
           <div className="text-center mb-4">
@@ -355,9 +298,9 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
             <button
               onClick={handleTap}
               onTouchStart={() => haptics.light()}
-              className={`w-32 h-32 rounded-full bg-slate-950 border-2 border-cyan-500/40 flex flex-col items-center justify-center shadow-lg cursor-pointer transition-all duration-100 select-none outline-hidden relative group overflow-hidden ${
+              className={`w-32 h-32 rounded-full bg-slate-950 border-2 border-cyan-500/40 flex flex-col items-center justify-center shadow-lg cursor-pointer transition-all duration-100 select-none outline-none relative group overflow-hidden ${
                 isMiningPressed 
-                  ? 'scale-90 shadow-cyan-500/10 border-cyan-400' 
+                  ? 'scale-90 border-cyan-400' 
                   : 'hover:border-cyan-400/70 shadow-cyan-950/60'
               }`}
             >
@@ -374,48 +317,16 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({
             </button>
           </div>
         </div>
-        {/* PROGRESS RING TARGET METRICS CARD */}
-        <DailyProgressRing 
-          stepsToday={stepsToday}
-          gamesPlayedToday={gamesPlayedToday}
-          adsWatchedToday={adsWatchedToday}
-        />
 
-        {/* LUCKY CHEST HOOK MODULE */}
-        <DailyLuckyChest 
-          lastOpenedDate={lastLuckyChestDate}
-          onClaimReward={onClaimChest}
-        />
+        {/* METRICS & SUBSYSTEMS LAYOUTS */}
+        <DailyProgressRing stepsToday={stepsToday} gamesPlayedToday={gamesPlayedToday} adsWatchedToday={adsWatchedToday} />
+        <DailyLuckyChest lastOpenedDate={lastLuckyChestDate} onClaimReward={onClaimChest} />
+        <DailyTriviaQuiz answeredDate={triviaAnsweredDate} onRewardEarned={onTriviaReward} />
+        <PersonalGoalTracker goals={personalGoals} onToggleGoal={onToggleGoal} onAddGoal={onAddGoal} />
+        <DailyMissions stepsToday={stepsToday} gamesPlayedToday={gamesPlayedToday} adsWatchedToday={adsWatchedToday} claimedMissionIds={claimedMissionIds} onClaimReward={onClaimMission} />
+        <Leaderboard currentUserEarned={currentUserTotalEarned} currentUserName={currentUserName} />
 
-        {/* TRIVIA QUIZ ENGAGEMENT HUB */}
-        <DailyTriviaQuiz 
-          answeredDate={triviaAnsweredDate}
-          onRewardEarned={onTriviaReward}
-        />
-
-        {/* GOALS TRACKING MANAGEMENT TAB */}
-        <PersonalGoalTracker 
-          goals={personalGoals}
-          onToggleGoal={onToggleGoal}
-          onAddGoal={onAddGoal}
-        />
-
-        {/* MISSIONS REWARDS PANEL CHECKER */}
-        <DailyMissions 
-          stepsToday={stepsToday}
-          gamesPlayedToday={gamesPlayedToday}
-          adsWatchedToday={adsWatchedToday}
-          claimedMissionIds={claimedMissionIds}
-          onClaimReward={onClaimMission}
-        />
-
-        {/* LEADERBOARDS RANKINGS COMPONENT CARD */}
-        <Leaderboard 
-          currentUserEarned={currentUserTotalEarned}
-          currentUserName={currentUserName}
-        />
-
-        {/* FOOTER CREDITS BRAND LOGO MARKS */}
+        {/* FOOTER SYSTEM CREDITS BRANDING */}
         <div className="w-full text-center py-6 text-[10px] text-slate-600 font-medium tracking-wide flex flex-col items-center gap-1.5 border-t border-slate-900/60 mt-4">
           <div className="flex items-center gap-1">
             <Trophy className="w-3 h-3 text-amber-500/50" />
