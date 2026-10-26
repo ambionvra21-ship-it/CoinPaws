@@ -1,5 +1,10 @@
 {
   "appId": "com.coinpaws.app",
   "appName": "CoinPaws",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "AdMob": {
+      "appId": "ca-app-pub-6655685917040449~5170056805"
+    }
+  }
 }
