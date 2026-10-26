@@ -2,6 +2,12 @@
   "appId": "com.moneypaws.app",
   "appName": "MoneyPaws",
   "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "moneypaws.app",
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  },
   "plugins": {
     "admob": {
       "appId": "ca-app-pub-6655685917040449~5170056805"
