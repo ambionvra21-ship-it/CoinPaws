@@ -1,15 +1,7 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss()
-  ],
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true
-  }
-});
+  plugins: [react()],
+  base: './', // FIX: Forces the compiler to output relative paths (e.g., assets/main.js instead of /assets/main.js)
+})
