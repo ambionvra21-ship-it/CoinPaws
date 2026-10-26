@@ -38,16 +38,30 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Inject AdMob App ID into AndroidManifest
+      - name: Inject AdMob App ID safely via Node
         run: |
-          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
-          ADMOB_METADATA='<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-6655685917040449~5170056805"/>'
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
           
-          # Safely injects the AdMob meta-data block right before the closing </application> tag
-          sed -i "s|<\/application>|    $ADMOB_METADATA\n    <\/application>|g" "$MANIFEST_PATH"
+          const manifestPath = path.join('android', 'app', 'src', 'main', 'AndroidManifest.xml');
           
-          echo "Successfully injected AdMob ID into Manifest:"
-          cat "$MANIFEST_PATH" | grep "APPLICATION_ID"
+          if (!fs.existsSync(manifestPath)) {
+            console.error('ERROR: Android Manifest file not found at: ' + manifestPath);
+            process.exit(1);
+          }
+          
+          let content = fs.readFileSync(manifestPath, 'utf8');
+          const metaData = '<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"ca-app-pub-6655685917040449~5170056805\"/>';
+          
+          if (!content.includes('com.google.android.gms.ads.APPLICATION_ID')) {
+            content = content.replace('</application>', '    ' + metaData + '\n    </application>');
+            fs.writeFileSync(manifestPath, content, 'utf8');
+            console.log('Successfully injected AdMob App ID!');
+          } else {
+            console.log('AdMob App ID already present in Manifest.');
+          }
+          "
 
       - name: Build APK with Gradle
         run: |
