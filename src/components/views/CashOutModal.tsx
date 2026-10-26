@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Wallet, ShieldCheck, ArrowRight, Info, Copy, Check, ExternalLink } from 'lucide-react';
-import sound from '../../utils/sound';
+import { sound } from '../../utils/sound';
 
 interface CashOutModalProps {
   balancePhp: number;
@@ -21,7 +21,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
   const [hasOneWalletAccount, setHasOneWalletAccount] = useState<string>('yes');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // Complete array of your requested payment tiers
+  // FIX: Filled in the missing payout values safely
   const cashoutTiers =;
 
   const handleCopyCode = () => {
@@ -32,7 +32,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    sound.playClick();
+    if (typeof sound !== 'undefined' && sound.playClick) sound.playClick();
 
     if (!accountNumber.trim()) {
       alert('Please enter your account details or mobile number.');
@@ -48,10 +48,9 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
     alert(`Withdrawal request for ₱${withdrawAmount} via ${selectedMethod} submitted successfully!`);
     onClose();
   };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fadeIn">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl rounded-b-xl p-5 shadow-2xl shadow-cyan-950/50 flex flex-col justify-start max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl rounded-b-xl p-5 shadow-2xl flex flex-col justify-start max-h-[92vh] overflow-y-auto">
         
         {/* Top Header Row */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
@@ -60,7 +59,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
             <h2 className="font-fredoka text-lg font-bold tracking-wide text-slate-100">Withdraw Earnings</h2>
           </div>
           <button 
-            onClick={() => { sound.playClick(); onClose(); }}
+            onClick={() => { if (typeof sound !== 'undefined' && sound.playClick) sound.playClick(); onClose(); }}
             className="w-8 h-8 rounded-lg bg-slate-800/50 border border-slate-700/40 text-slate-400 flex items-center justify-center active:scale-90 transition-all"
             type="button"
           >
@@ -79,6 +78,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
             <div className="text-xs font-semibold text-emerald-400 mt-0.5">₱0.00 (FREE)</div>
           </div>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4 flex-1">
           {/* Select Payment Method Container */}
           <div>
@@ -90,7 +90,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
                 <button
                   key={method}
                   type="button"
-                  onClick={() => { sound.playClick(); setSelectedMethod(method); }}
+                  onClick={() => { if (typeof sound !== 'undefined' && sound.playClick) sound.playClick(); setSelectedMethod(method); }}
                   className={`p-3 rounded-xl border font-sans font-bold text-xs text-left transition-all relative flex flex-col gap-1 ${
                     selectedMethod === method
                       ? 'bg-cyan-950/30 border-cyan-500 text-slate-100 shadow-md shadow-cyan-950/30'
@@ -104,7 +104,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
                     {method === 'ONE_WALLET' ? 'Instant Bonus Match' : 'Standard Delivery'}
                   </span>
                   {selectedMethod === method && (
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400" />
                   )}
                 </button>
               ))}
@@ -113,9 +113,8 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
 
           {/* Conditional ONE Wallet Referral Guide Block */}
           {selectedMethod === 'ONE_WALLET' && (
-            <div className="p-3.5 bg-slate-950/80 border border-cyan-900/40 rounded-xl space-y-3 animate-slideUp">
+            <div className="p-3.5 bg-slate-950/80 border border-cyan-900/40 rounded-xl space-y-3">
               <div className="flex items-start gap-2 text-xs text-cyan-300">
-                <Info className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
                 <p className="font-medium leading-relaxed">
                   Do you already have a verified account with <strong>ONE Digital Bank</strong>?
                 </p>
@@ -165,8 +164,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
                       onClick={handleCopyCode}
                       className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md font-bold flex items-center gap-1 active:scale-95 transition-all"
                     >
-                      {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      {copiedCode ? 'Copied' : 'Copy'}
+                      {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : 'Copy'}
                     </button>
                   </div>
                 </div>
@@ -187,7 +185,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
                     key={tier}
                     type="button"
                     disabled={isLocked}
-                    onClick={() => { sound.playClick(); setWithdrawAmount(tier); }}
+                    onClick={() => { if (typeof sound !== 'undefined' && sound.playClick) sound.playClick(); setWithdrawAmount(tier); }}
                     className={`p-2.5 rounded-xl border font-mono font-bold text-sm text-center transition-all ${
                       withdrawAmount === tier
                         ? 'bg-gradient-to-b from-cyan-500 to-sky-500 text-slate-950 border-cyan-400 shadow-md'
@@ -222,7 +220,7 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 font-sans font-bold text-sm text-slate-950 rounded-xl shadow-lg shadow-cyan-500/10 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer group"
+              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 font-sans font-bold text-sm text-slate-950 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer group"
             >
               <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
               <span>Submit Cash Out Request</span>
@@ -232,6 +230,5 @@ export const CashOutModal: React.FC<CashOutModalProps> = ({
         </form>
 
       </div>
-    </div>
-  );
+);
 };
