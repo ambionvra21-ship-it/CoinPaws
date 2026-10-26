@@ -4,7 +4,7 @@ import { UserState, Transaction } from './types';
 import { sound } from './utils/sound';
 import { haptics } from './utils/haptics';
 import { fireRewardConfetti } from './utils/confetti';
-import { MainDashboard } from './components/views/MainDashboard';
+import { MainDashboard } from './components/MainDashboard';
 import { CashOutModal } from './components/views/CashOutModal';
 import { DailyCheckinModal } from './components/DailyCheckinModal';
 import { WatchAndEarnModal } from './components/views/WatchAndEarnModal';
