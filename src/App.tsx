@@ -241,21 +241,12 @@ export default function App() {
     });
   }, []);
 
-  // Withdrawal Cash Out Request
-  const handleWithdrawal = useCallback(
-    (amount: number, method: string, account: string) => {
-      setState((prev) => {
-        const nextBalance = Math.max(0, Number((prev.balancePhp - amount).toFixed(2)));
-
-        const newTx: Transaction = {
           id: `tx-wd-${Date.now()}`,
           type: 'WITHDRAWAL',
-          amountPhp: -amount,
-          title: `Cash Out via ${method}`,
+          amountPhp: amount,
+          title: `Cash Out Withdrawal Request (${method})`,
           timestamp: Date.now(),
-          status: 'PROCESSING',
-          payoutMethod: method,
-          accountNumber: account,
+          status: 'PENDING',
         };
 
         return {
@@ -268,400 +259,130 @@ export default function App() {
     []
   );
 
-  // Claim Daily Mission Reward
-  const handleClaimMission = useCallback(
-    (missionId: string, phpReward: number, pawsReward: number, title: string) => {
-      setState((prev) => {
-        if (prev.claimedMissionIds.includes(missionId)) return prev;
-        const nextBalance = Number((prev.balancePhp + phpReward).toFixed(2));
-        const nextTotal = Number((prev.totalEarnedPhp + phpReward).toFixed(2));
+  // Toggle personal goals check status
+  const handleToggleGoal = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      personalGoals: prev.personalGoals.map((g) =>
+        g.id === id ? { ...g, completed: !g.completed } : g
+      ),
+    }));
+  }, []);
 
-        const newTx: Transaction = {
-          id: `tx-mission-${Date.now()}`,
-          type: 'DAILY_MISSION',
-          amountPhp: phpReward,
-          title: `Daily Mission: ${title} (+${pawsReward} Paws)`,
-          timestamp: Date.now(),
-          status: 'COMPLETED',
-        };
-
-        return {
-          ...prev,
-          balancePhp: nextBalance,
-          totalEarnedPhp: nextTotal,
-          claimedMissionIds: [...prev.claimedMissionIds, missionId],
-          freeSpins: missionId === 'm-mega-chest' ? prev.freeSpins + 1 : prev.freeSpins,
-          transactions: [newTx, ...prev.transactions].slice(0, 50),
-        };
-      });
-    },
-    []
-  );
-
-  // Claim Daily Lucky Chest (Distinct Mystery Event)
-  const handleClaimLuckyChest = useCallback((reward: ChestReward) => {
+  // Create a new customized goal tracker item
+  const handleAddGoal = useCallback((title: string, icon: string) => {
     setState((prev) => {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const nextBalance = Number((prev.balancePhp + reward.php).toFixed(2));
-      const nextTotal = Number((prev.totalEarnedPhp + reward.php).toFixed(2));
-      const bonusSpins = reward.bonusSpins || 0;
-      const bonusCards = reward.bonusCards || 0;
-
-      const newTx: Transaction = {
-        id: `tx-chest-${Date.now()}`,
-        type: 'LUCKY_CHEST',
-        amountPhp: reward.php,
-        title: `Daily Lucky Chest: ${reward.tierName} (+${reward.paws} Paws)`,
-        timestamp: Date.now(),
-        status: 'COMPLETED',
+      const newGoal: PersonalGoal = {
+        id: `goal-${Date.now()}`,
+        title,
+        icon,
+        completed: false,
       };
-
       return {
         ...prev,
-        balancePhp: nextBalance,
-        totalEarnedPhp: nextTotal,
-        lastLuckyChestDate: todayStr,
-        freeSpins: prev.freeSpins + bonusSpins,
-        freeScratchCards: prev.freeScratchCards + bonusCards,
-        transactions: [newTx, ...prev.transactions].slice(0, 50),
+        personalGoals: [...prev.personalGoals, newGoal],
       };
     });
   }, []);
 
-  // Add Support Ticket
-  const handleAddTicket = useCallback((ticket: SupportTicket) => {
-    setState((prev) => ({
-      ...prev,
-      tickets: [ticket, ...prev.tickets],
-    }));
-  }, []);
+  // Claim milestone missions bounty handler
+  const handleClaimMission = useCallback(
+    (missionId: string, phpReward: number, pawsReward: number, title: string) => {
+      addEarnings(phpReward, `Completed Mission: ${title}`, 'MISSION');
+      setState((prev) => ({
+        ...prev,
+        claimedMissionIds: [...prev.claimedMissionIds, missionId],
+      }));
+      fireRewardConfetti(0.5);
+    },
+    [addEarnings]
+  );
 
-  // Sound Toggle
-  const handleToggleSound = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      soundEnabled: !prev.soundEnabled,
-    }));
-  }, []);
+  // Claim lucky random mystery chest items handler
+  const handleClaimChest = useCallback(
+    (reward: ChestReward) => {
+      addEarnings(reward.phpReward, 'Lucky Chest Loot Box Unlocked', 'CHEST');
+      setState((prev) => ({
+        ...prev,
+        lastLuckyChestDate: new Date().toISOString().split('T')[0],
+      }));
+      fireRewardConfetti(0.6);
+    },
+    [addEarnings]
+  );
+
+  // Trivia questionnaire reward claim handler
+  const handleTriviaReward = useCallback(
+    (php: number, paws: number, title: string) => {
+      addEarnings(php, `Trivia Reward: ${title}`, 'TRIVIA');
+      setState((prev) => ({
+        ...prev,
+        triviaAnsweredDate: new Date().toISOString().split('T')[0],
+      }));
+      fireRewardConfetti(0.5);
+    },
+    [addEarnings]
+  );
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasClaimedCheckin = state.lastCheckinDate === todayStr;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-0 md:p-4 selection:bg-cyan-500 selection:text-slate-950 font-sans">
-      {/* Top Floating View Switcher (Desktop only) */}
-      <div className="hidden md:flex fixed top-3 right-4 z-40 items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-cyan-500/30 text-xs text-slate-300 shadow-xl">
-        <span className="text-[11px] text-slate-400">Preview:</span>
-        <button
-          onClick={() => setIsPhoneFrame(true)}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors ${
-            isPhoneFrame ? 'bg-cyan-500 text-slate-950' : 'hover:text-white'
-          }`}
-        >
-          <Smartphone className="w-3.5 h-3.5" />
-          <span>Android Frame</span>
-        </button>
-        <button
-          onClick={() => setIsPhoneFrame(false)}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-colors ${
-            !isPhoneFrame ? 'bg-cyan-500 text-slate-950' : 'hover:text-white'
-          }`}
-        >
-          <Monitor className="w-3.5 h-3.5" />
-          <span>Full Width</span>
-        </button>
-      </div>
-
-      {/* Main Container: Mobile Phone Shell or Responsive Canvas */}
-      <main
-        className={`w-full transition-all duration-300 ${
-          isPhoneFrame
-            ? 'max-w-[410px] min-h-[840px] bg-slate-950 rounded-none md:rounded-[44px] border-0 md:border-[10px] md:border-slate-800 shadow-none md:shadow-[0_0_60px_rgba(6,182,212,0.25)] relative overflow-hidden flex flex-col'
-            : 'max-w-2xl min-h-screen bg-slate-950 shadow-2xl relative overflow-hidden flex flex-col'
-        }`}
-      >
-        {/* Android Speaker Grill & Camera Punch-hole (Frame mode) */}
-        {isPhoneFrame && (
-          <div className="hidden md:flex absolute top-2 left-1/2 -translate-x-1/2 z-30 items-center gap-3 pointer-events-none">
-            <div className="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-950 ring-1 ring-cyan-500/40" />
-            </div>
-            <div className="w-12 h-1 rounded-full bg-slate-800" />
-          </div>
-        )}
-
-        {/* Primary Screen Content: Exactly replicating the uploaded mockup */}
-        <div className="flex-1 w-full overflow-y-auto pb-6">
-          <MainDashboard
-            balancePhp={state.balancePhp}
-            targetThresholdPhp={state.targetThresholdPhp}
-            tapMineCount={state.tapMineCount}
-            currentUserTotalEarned={state.totalEarnedPhp}
-            currentUserName={state.userName}
-            stepsToday={state.stepsToday}
-            gamesPlayedToday={state.gamesPlayedToday}
-            adsWatchedToday={state.adsWatchedToday}
-            hasClaimedCheckin={state.lastCheckinDate === new Date().toISOString().split('T')[0]}
-            claimedMissionIds={state.claimedMissionIds}
-            lastLuckyChestDate={state.lastLuckyChestDate}
-            onTapMine={handleTapMine}
-            onOpenCashOut={() => setActiveModal('cashout')}
-            onOpenShareEarnings={() => setActiveModal('shareEarnings')}
-            onOpenMenu={() => setActiveModal('menu')}
-            onOpenProfile={() => setActiveModal('profile')}
-            onOpenDailyLogins={() => setActiveModal('dailyLogins')}
-            onOpenWatchAd={() => setActiveModal('watchAd')}
-            onOpenSpinWheel={() => setActiveModal('spinWheel')}
-            onOpenWalking={() => setActiveModal('walking')}
-            onOpenScratchCards={() => setActiveModal('scratch')}
-            onOpenFruitTap={() => setActiveModal('fruitTap')}
-            onClaimMission={handleClaimMission}
-            onClaimChest={handleClaimLuckyChest}
-          />
-        </div>
-
-        {/* Android Home Navigation Pill Indicator */}
-        <div className="w-full py-2 flex items-center justify-center bg-slate-950/80 pointer-events-none">
-          <div className="w-32 h-1 rounded-full bg-slate-700/80" />
-        </div>
-      </main>
-
-      {/* ========================================================
-          MODALS & SUB-SCREENS
-          ======================================================== */}
-
-      {/* Cash Out Modal */}
-      <CashOutModal
-        isOpen={activeModal === 'cashout'}
-        onClose={() => setActiveModal(null)}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-start pb-8">
+      {/* RENDER DYNAMIC DASHBOARD PORTVIEW SHELL */}
+      <MainDashboard
         balancePhp={state.balancePhp}
         targetThresholdPhp={state.targetThresholdPhp}
-        onWithdraw={handleWithdrawal}
-      />
-
-      {/* Daily Check-in Streak Modal */}
-      <DailyCheckinModal
-        isOpen={activeModal === 'dailyLogins'}
-        onClose={() => setActiveModal(null)}
-        consecutiveDays={state.consecutiveDays}
-        lastCheckinDate={state.lastCheckinDate}
-        onClaimDaily={handleClaimDailyStreak}
-      />
-
-      {/* Watch Rewarded Ad Modal */}
-      <WatchAndEarnModal
-        isOpen={activeModal === 'watchAd'}
-        onClose={() => setActiveModal(null)}
-        onRewardClaimed={handleAdRewardClaimed}
-        adsWatchedToday={state.adsWatchedToday}
-      />
-
-      {/* Walking Steps Modal / View */}
-      {activeModal === 'walking' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-slate-950 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveModal(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <WalkingView
-              stepsToday={state.stepsToday}
-              stepsGoal={state.stepsGoal}
-              onAddSteps={handleAddSteps}
-              onConvertStepsToCash={handleConvertSteps}
-              onClose={() => setActiveModal(null)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Spin the Wheel Modal / View */}
-      {activeModal === 'spinWheel' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-slate-950 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveModal(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <GamesView
-              paws={Math.round(state.balancePhp * 1000)}
-              freeSpins={state.freeSpins}
-              freeScratchCards={state.freeScratchCards}
-              onAddPaws={(paws, title, type) => {
-                const php = Number((paws / 1000).toFixed(2));
-                addEarnings(php, title, type);
-              }}
-              onUseFreeSpin={() => {
-                setState((prev) => ({ ...prev, freeSpins: Math.max(0, prev.freeSpins - 1) }));
-              }}
-              onUseScratchCard={() => {
-                setState((prev) => ({ ...prev, freeScratchCards: Math.max(0, prev.freeScratchCards - 1) }));
-              }}
-              onOpenWatchAd={() => {
-                setActiveModal('watchAd');
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Scratch & Win Paws Modal / View */}
-      {activeModal === 'scratch' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-slate-950 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveModal(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <GamesView
-              paws={Math.round(state.balancePhp * 1000)}
-              freeSpins={state.freeSpins}
-              freeScratchCards={state.freeScratchCards}
-              onAddPaws={(paws, title, type) => {
-                const php = Number((paws / 1000).toFixed(2));
-                addEarnings(php, title, type);
-              }}
-              onUseFreeSpin={() => {
-                setState((prev) => ({ ...prev, freeSpins: Math.max(0, prev.freeSpins - 1) }));
-              }}
-              onUseScratchCard={() => {
-                setState((prev) => ({ ...prev, freeScratchCards: Math.max(0, prev.freeScratchCards - 1) }));
-              }}
-              onOpenWatchAd={() => {
-                setActiveModal('watchAd');
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Fruit Tap Modal / View */}
-      {activeModal === 'fruitTap' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-slate-950 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveModal(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <GamesView
-              paws={Math.round(state.balancePhp * 1000)}
-              freeSpins={state.freeSpins}
-              freeScratchCards={state.freeScratchCards}
-              onAddPaws={(paws, title, type) => {
-                const php = Number((paws / 1000).toFixed(2));
-                addEarnings(php, title, type);
-              }}
-              onUseFreeSpin={() => {
-                setState((prev) => ({ ...prev, freeSpins: Math.max(0, prev.freeSpins - 1) }));
-              }}
-              onUseScratchCard={() => {
-                setState((prev) => ({ ...prev, freeScratchCards: Math.max(0, prev.freeScratchCards - 1) }));
-              }}
-              onOpenWatchAd={() => {
-                setActiveModal('watchAd');
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Slide-out Menu Drawer */}
-      <MenuDrawer
-        isOpen={activeModal === 'menu'}
-        onClose={() => setActiveModal(null)}
-        soundEnabled={state.soundEnabled}
-        onToggleSound={handleToggleSound}
-        onOpenReferral={() => setActiveModal('referral')}
-        onOpenSupport={() => setActiveModal('support')}
-        onOpenFaq={() => setActiveModal('support')}
-        onOpenLeaderboard={() => {
-          setActiveModal(null);
-          setTimeout(() => {
-            document.getElementById('leaderboard-section')?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
-        }}
-        onOpenMissions={() => {
-          setActiveModal(null);
-          setTimeout(() => {
-            document.getElementById('missions-section')?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
-        }}
-        onOpenShareEarnings={() => setActiveModal('shareEarnings')}
-      />
-
-      {/* User Profile Modal */}
-      <ProfileModal
-        isOpen={activeModal === 'profile'}
-        onClose={() => setActiveModal(null)}
-        userName={state.userName}
-        userEmail={state.userEmail}
-        balancePhp={state.balancePhp}
-        totalEarnedPhp={state.totalEarnedPhp}
-        consecutiveDays={state.consecutiveDays}
-        referralCode={state.referralCode}
-        onOpenSupport={() => setActiveModal('support')}
-      />
-
-      {/* Referral Program Modal */}
-      <ReferralModal
-        isOpen={activeModal === 'referral'}
-        onClose={() => setActiveModal(null)}
-        referralCode={state.referralCode}
-        referralCount={state.referralCount}
-        referralEarningsPhp={state.referralEarningsPhp}
-        onSimulateReferral={handleSimulateReferral}
-      />
-
-      {/* Share Earnings Card Modal */}
-      <ShareEarningsModal
-        isOpen={activeModal === 'shareEarnings'}
-        onClose={() => setActiveModal(null)}
-        userName={state.userName}
-        totalEarnedPhp={state.totalEarnedPhp}
-        balancePhp={state.balancePhp}
-        stepsToday={state.stepsToday}
         tapMineCount={state.tapMineCount}
-        consecutiveDays={state.consecutiveDays}
-        referralCode={state.referralCode}
+        currentUserTotalEarned={state.totalEarnedPhp}
+        currentUserName={state.username}
+        stepsToday={state.stepsToday}
+        gamesPlayedToday={state.gamesPlayedToday}
+        adsWatchedToday={state.adsWatchedToday}
+        hasClaimedCheckin={hasClaimedCheckin}
+        claimedMissionIds={state.claimedMissionIds}
+        lastLuckyChestDate={state.lastLuckyChestDate}
+        personalGoals={state.personalGoals}
+        triviaAnsweredDate={state.triviaAnsweredDate}
+        onTapMine={handleTapMine}
+        onOpenCashOut={() => setActiveModal('cashout')}
+        onOpenShareEarnings={() => setActiveModal('shareEarnings')}
+        onOpenMenu={() => setActiveModal('menu')}
+        onOpenProfile={() => setActiveModal('profile')}
+        onOpenDailyLogins={() => setActiveModal('dailyLogins')}
+        onOpenWatchAd={() => setActiveModal('watchAd')}
+        onOpenSpinWheel={() => setActiveModal('spinWheel')}
+        onOpenWalking={() => setActiveModal('walking')}
+        onOpenScratchCards={() => setActiveModal('scratch')}
+        onOpenFruitTap={() => setActiveModal('fruitTap')}
+        onClaimMission={handleClaimMission}
+        onClaimChest={handleClaimChest}
+        onToggleGoal={handleToggleGoal}
+        onAddGoal={handleAddGoal}
+        onTriviaReward={handleTriviaReward}
       />
 
-      {/* Support Center & FAQ Modal */}
-      {activeModal === 'support' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-slate-950 border border-cyan-500/40 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveModal(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <SupportView
-              tickets={state.tickets}
-              onAddTicket={handleAddTicket}
-              onClose={() => setActiveModal(null)}
-            />
-          </div>
-        </div>
+      {/* RENDER MODAL ROUTER PORTALS CONDITIONALLY */}
+      {activeModal === 'menu' && (
+        <MenuDrawer onClose={() => setActiveModal(null)} onNavigate={(view) => setActiveModal(view as any)} />
+      )}
+      {activeModal === 'profile' && (
+        <ProfileModal userState={state} onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'cashout' && (
+        <CashOutModal balancePhp={state.balancePhp} onConfirmWithdrawal={handleWithdrawal} onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'dailyLogins' && (
+        <DailyCheckinModal consecutiveDays={state.consecutiveDays} hasClaimedToday={hasClaimedCheckin} onClaim={handleClaimDailyStreak} onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'watchAd' && (
+        <WatchAndEarnModal adsWatchedToday={state.adsWatchedToday} onAdRewardClaimed={handleAdRewardClaimed} onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'walking' && (
+        <WalkingView stepsToday={state.stepsToday} onAddSteps={handleAddSteps} onConvertSteps={handleConvertSteps} onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'shareEarnings' && (
+        <ShareEarningsModal balancePhp={state.balancePhp} username={state.username} onClose={() => setActiveModal(null)} />
       )}
     </div>
   );
