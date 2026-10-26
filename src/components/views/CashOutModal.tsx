@@ -1,316 +1,236 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, ShieldCheck, ArrowRight, AlertCircle, History, Clock } from 'lucide-react';
-import { sound } from '../../utils/sound';
-import { fireRewardConfetti } from '../../utils/confetti';
-import { formatPhp } from '../../utils/storage';
-import { SUPPORT_EMAIL } from '../../types';
+import { X, Wallet, ShieldCheck, ArrowRight, Info, Copy, Check, ExternalLink } from 'lucide-react';
+import sound from '../../utils/sound';
 
 interface CashOutModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   balancePhp: number;
-  targetThresholdPhp: number;
-  onWithdraw: (amountPhp: number, method: string, account: string) => void;
+  onConfirmWithdrawal: (amount: number, method: string, account: string) => void;
+  onClose: () => void;
 }
 
-interface PayoutMethod {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  accountPlaceholder: string;
-  minAmount: number;
-}
-
-const PAYOUT_METHODS: PayoutMethod[] = [
-  {
-    id: 'gcash',
-    name: 'GCash',
-    icon: '📱',
-    color: 'from-blue-600 to-sky-500',
-    accountPlaceholder: '09XX XXX XXXX (11 digits)',
-    minAmount: 5.50,
-  },
-  {
-    id: 'maya',
-    name: 'Maya / PayMaya',
-    icon: '💳',
-    color: 'from-emerald-600 to-teal-500',
-    accountPlaceholder: '09XX XXX XXXX (11 digits)',
-    minAmount: 5.50,
-  },
-  {
-    id: 'paypal',
-    name: 'PayPal',
-    icon: '🌐',
-    color: 'from-blue-700 to-indigo-600',
-    accountPlaceholder: 'your-email@example.com',
-    minAmount: 50.00,
-  },
-  {
-    id: 'binance',
-    name: 'Binance / USDT',
-    icon: '🪙',
-    color: 'from-amber-600 to-yellow-500',
-    accountPlaceholder: 'BEP20 / TRC20 Wallet or Pay ID',
-    minAmount: 50.00,
-  },
-  {
-    id: 'shopeepay',
-    name: 'ShopeePay',
-    icon: '🛍️',
-    color: 'from-orange-600 to-amber-500',
-    accountPlaceholder: '09XX XXX XXXX',
-    minAmount: 10.00,
-  },
-];
+type PaymentMethod = 'GCASH' | 'MAYA' | 'PAYPAL' | 'ONE_WALLET';
 
 export const CashOutModal: React.FC<CashOutModalProps> = ({
-  isOpen,
-  onClose,
   balancePhp,
-  targetThresholdPhp,
-  onWithdraw,
+  onConfirmWithdrawal,
+  onClose,
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<PayoutMethod>(PAYOUT_METHODS[0]);
-  const [accountNumber, setAccountNumber] = useState('');
-  const [requestedAmount, setRequestedAmount] = useState(5.50);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [lastTxId, setLastTxId] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('GCASH');
+  const [withdrawAmount, setWithdrawAmount] = useState<number>(10);
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [hasOneWalletAccount, setHasOneWalletAccount] = useState<string>('yes');
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  if (!isOpen) return null;
+  // Complete array of your requested payment tiers
+  const cashoutTiers =;
 
-  const hasEnough = balancePhp >= requestedAmount;
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText('V98HAR');
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
+    sound.playClick();
 
     if (!accountNumber.trim()) {
-      setErrorMsg('Please enter your account number or email');
-      sound.playClick();
+      alert('Please enter your account details or mobile number.');
       return;
     }
 
-    if (!hasEnough) {
-      setErrorMsg(`Insufficient balance. Current balance is ${formatPhp(balancePhp)} (Target: ${formatPhp(requestedAmount)})`);
-      sound.playClick();
+    if (balancePhp < withdrawAmount) {
+      alert('Insufficient balance for this payout tier.');
       return;
     }
 
-    sound.playFanfare();
-    fireRewardConfetti(0.4);
-    const txId = `MP-${Math.floor(100000 + Math.random() * 900000)}`;
-    setLastTxId(txId);
-    setIsSuccess(true);
-    onWithdraw(requestedAmount, selectedMethod.name, accountNumber);
-  };
-
-  const handleSimulateFastFill = () => {
-    // Helpful demo helper for instant verification
-    sound.playCoin();
-    setRequestedAmount(5.50);
+    onConfirmWithdrawal(withdrawAmount, selectedMethod, accountNumber);
+    alert(`Withdrawal request for ₱${withdrawAmount} via ${selectedMethod} submitted successfully!`);
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm bg-slate-900 border border-cyan-500/40 rounded-2xl overflow-hidden shadow-2xl shadow-cyan-950/60 flex flex-col max-h-[90vh]">
-        {/* Top Header */}
-        <div className="bg-slate-950 px-4 py-3 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">💸</span>
-            <h3 className="font-fredoka text-lg font-bold text-white">Cash Out Rewards</h3>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fadeIn">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl rounded-b-xl p-5 shadow-2xl shadow-cyan-950/50 flex flex-col justify-start max-h-[92vh] overflow-y-auto">
+        
+        {/* Top Header Row */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+          <div className="flex items-center gap-2 text-cyan-400">
+            <Wallet className="w-5 h-5 stroke-[2.2]" />
+            <h2 className="font-fredoka text-lg font-bold tracking-wide text-slate-100">Withdraw Earnings</h2>
           </div>
-          <button
-            onClick={() => {
-              sound.playClick();
-              onClose();
-            }}
-            className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          <button 
+            onClick={() => { sound.playClick(); onClose(); }}
+            className="w-8 h-8 rounded-lg bg-slate-800/50 border border-slate-700/40 text-slate-400 flex items-center justify-center active:scale-90 transition-all"
+            type="button"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-4 overflow-y-auto space-y-4">
-          {isSuccess ? (
-            <div className="text-center py-6 flex flex-col items-center animate-in zoom-in-95">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-pulse" />
-              </div>
-              <h4 className="font-fredoka text-xl font-bold text-white">Withdrawal Submitted!</h4>
-              <p className="text-xs text-slate-300 mt-1 max-w-xs">
-                Your request of <strong className="text-emerald-400 font-mono text-sm">{formatPhp(requestedAmount)}</strong> via {selectedMethod.name} has been queued.
-              </p>
-
-              <div className="my-4 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-left w-full text-xs space-y-1.5">
-                <div className="flex justify-between text-slate-400">
-                  <span>Reference ID:</span>
-                  <span className="font-mono text-cyan-300 font-bold">{lastTxId}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Payout Method:</span>
-                  <span className="text-white font-medium">{selectedMethod.name}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Destination:</span>
-                  <span className="font-mono text-white truncate max-w-[150px]">{accountNumber}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Fee:</span>
-                  <span className="text-emerald-400 font-bold">₱0.00 (Zero Fee)</span>
-                </div>
-                <div className="flex justify-between text-slate-400 pt-1 border-t border-slate-800">
-                  <span>Est. Time:</span>
-                  <span className="text-cyan-300 font-semibold flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Within 12-24 hours
+        {/* Balance Status Display */}
+        <div className="bg-slate-950/50 border border-slate-800/60 rounded-xl p-3.5 my-4 flex justify-between items-center">
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Available Balance</span>
+            <div className="text-xl font-black text-cyan-400 font-mono mt-0.5">₱{balancePhp.toFixed(2)}</div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Processing Fee</span>
+            <div className="text-xs font-semibold text-emerald-400 mt-0.5">₱0.00 (FREE)</div>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+          {/* Select Payment Method Container */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2">
+              Select Payout Platform
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['GCASH', 'MAYA', 'PAYPAL', 'ONE_WALLET'] as PaymentMethod[]).map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => { sound.playClick(); setSelectedMethod(method); }}
+                  className={`p-3 rounded-xl border font-sans font-bold text-xs text-left transition-all relative flex flex-col gap-1 ${
+                    selectedMethod === method
+                      ? 'bg-cyan-950/30 border-cyan-500 text-slate-100 shadow-md shadow-cyan-950/30'
+                      : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <span>
+                    {method === 'ONE_WALLET' ? 'ONE Wallet' : method.charAt(0) + method.slice(1).toLowerCase()}
                   </span>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-slate-400">
-                Inquiries? Contact support at <br />
-                <span className="text-cyan-300 font-mono">{SUPPORT_EMAIL}</span>
-              </p>
-
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setIsSuccess(false);
-                  onClose();
-                }}
-                className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs shadow-md cursor-pointer"
-              >
-                Back to Dashboard
-              </button>
+                  <span className="text-[9px] font-medium opacity-60">
+                    {method === 'ONE_WALLET' ? 'Instant Bonus Match' : 'Standard Delivery'}
+                  </span>
+                  {selectedMethod === method && (
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                  )}
+                </button>
+              ))}
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Balance Summary Card */}
-              <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-cyan-300 uppercase font-bold tracking-wider">
-                    Available Balance
-                  </span>
-                  <div className="font-mono text-xl font-extrabold text-cyan-400">
-                    {formatPhp(balancePhp)}
+          </div>
+
+          {/* Conditional ONE Wallet Referral Guide Block */}
+          {selectedMethod === 'ONE_WALLET' && (
+            <div className="p-3.5 bg-slate-950/80 border border-cyan-900/40 rounded-xl space-y-3 animate-slideUp">
+              <div className="flex items-start gap-2 text-xs text-cyan-300">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
+                <p className="font-medium leading-relaxed">
+                  Do you already have a verified account with <strong>ONE Digital Bank</strong>?
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <label className={`p-2 rounded-lg border text-center text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                  hasOneWalletAccount === 'yes' ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="oneWalletCheck" 
+                    value="yes" 
+                    checked={hasOneWalletAccount === 'yes'}
+                    onChange={() => setHasOneWalletAccount('yes')}
+                    className="sr-only" 
+                  />
+                  Yes, I have one
+                </label>
+                <label className={`p-2 rounded-lg border text-center text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                  hasOneWalletAccount === 'no' ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300' : 'bg-slate-900/40 border-slate-800 text-slate-400'
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="oneWalletCheck" 
+                    value="no" 
+                    checked={hasOneWalletAccount === 'no'}
+                    onChange={() => setHasOneWalletAccount('no')}
+                    className="sr-only" 
+                  />
+                  No, not yet
+                </label>
+              </div>
+
+              {hasOneWalletAccount === 'no' && (
+                <div className="mt-2 pt-3 border-t border-slate-800/80 space-y-2.5 text-[11px] text-slate-300 leading-normal">
+                  <p>
+                    🎁 Get a free <strong>₱100 instantly</strong> credited to your account! Go to <a href="https://uno.global" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline font-bold inline-flex items-center gap-0.5">uno.global <ExternalLink className="w-2.5 h-2.5" /></a> and register.
+                  </p>
+                  <div className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg p-2 mt-1">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 block uppercase">Required Referral Code:</span>
+                      <span className="text-sm font-black font-mono text-slate-100 tracking-wider">V98HAR</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyCode}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md font-bold flex items-center gap-1 active:scale-95 transition-all"
+                    >
+                      {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedCode ? 'Copied' : 'Copy'}
+                    </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block">Next Threshold</span>
-                  <span className="text-xs font-mono font-bold text-amber-300">
-                    {formatPhp(targetThresholdPhp)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Method Selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-2">
-                  Select Payout Channel
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PAYOUT_METHODS.map((method) => {
-                    const isSelected = selectedMethod.id === method.id;
-                    return (
-                      <button
-                        type="button"
-                        key={method.id}
-                        onClick={() => {
-                          sound.playClick();
-                          setSelectedMethod(method);
-                          setRequestedAmount(method.minAmount);
-                        }}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
-                          isSelected
-                            ? 'bg-cyan-950/60 border-cyan-400 shadow-md shadow-cyan-500/20 text-white'
-                            : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <span className="text-xl">{method.icon}</span>
-                        <div className="truncate">
-                          <span className="text-xs font-bold block truncate">{method.name}</span>
-                          <span className="text-[9px] text-slate-400 block">Min: {formatPhp(method.minAmount)}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Account Number Input */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  {selectedMethod.name} Account / Mobile No.
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder={selectedMethod.accountPlaceholder}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 font-mono"
-                />
-              </div>
-
-              {/* Amount Selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Cashout Amount
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[5.50, 10.00, 25.00, 50.00, 100.00].map((amt) => {
-                    const isSelected = requestedAmount === amt;
-                    return (
-                      <button
-                        type="button"
-                        key={amt}
-                        onClick={() => {
-                          sound.playClick();
-                          setRequestedAmount(amt);
-                        }}
-                        className={`py-2 px-1 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer text-center ${
-                          isSelected
-                            ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md shadow-cyan-500/30'
-                            : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                        }`}
-                      >
-                        {formatPhp(amt)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span>{errorMsg}</span>
-                </div>
               )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg ${
-                  hasEnough
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold shadow-cyan-500/30 active:scale-98'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-750'
-                }`}
-              >
-                <span>Confirm {formatPhp(requestedAmount)} Cash Out</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Zero processing fee • Verified safe payout</span>
-              </div>
-            </form>
+            </div>
           )}
-        </div>
+
+          {/* Select Cash Incentive Tier */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-2">
+              Select Payout Amount
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {cashoutTiers.map((tier) => {
+                const isLocked = balancePhp < tier;
+                return (
+                  <button
+                    key={tier}
+                    type="button"
+                    disabled={isLocked}
+                    onClick={() => { sound.playClick(); setWithdrawAmount(tier); }}
+                    className={`p-2.5 rounded-xl border font-mono font-bold text-sm text-center transition-all ${
+                      withdrawAmount === tier
+                        ? 'bg-gradient-to-b from-cyan-500 to-sky-500 text-slate-950 border-cyan-400 shadow-md'
+                        : isLocked
+                        ? 'bg-slate-950/10 border-slate-900/60 text-slate-600 cursor-not-allowed line-through'
+                        : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    ₱{tier}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Destination Form Field Input */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-1.5">
+              {selectedMethod === 'PAYPAL' ? 'PayPal Email Address' : 'Account Mobile Number / Details'}
+            </label>
+            <input
+              type={selectedMethod === 'PAYPAL' ? 'email' : 'text'}
+              required
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder={selectedMethod === 'PAYPAL' ? 'example@paypal.com' : 'e.g., 0927XXXXXXX'}
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 font-sans transition-all shadow-inner"
+            />
+          </div>
+
+          {/* Bottom Submission Action Trigger */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full h-12 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 font-sans font-bold text-sm text-slate-950 rounded-xl shadow-lg shadow-cyan-500/10 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer group"
+            >
+              <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
+              <span>Submit Cash Out Request</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+        </form>
+
       </div>
     </div>
   );
