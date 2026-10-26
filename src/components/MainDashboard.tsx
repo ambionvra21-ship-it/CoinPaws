@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Menu, User, Sparkles, Footprints, Tv, Calendar, RefreshCw, Trophy, Share2 } from "lucide-react";
 
-// FIX: Removed curly braces to match your project's default exports
-import sound from '../utils/sound';
-import haptics from '../utils/haptics';
-import fireRewardConfetti from '../utils/confetti';
-import { formatPhp } from '../utils/storage';
+import sound from "../utils/sound";
+import haptics from "../utils/haptics";
+import fireRewardConfetti from "../utils/confetti";
+import { formatPhp } from "../utils/storage";
 
-import { Leaderboard } from './Leaderboard';
-import { DailyMissions } from './DailyMissions';
-import { DailyNewsTicker } from './DailyNewsTicker';
-import { DailyLuckyChest, ChestReward } from './DailyLuckyChest';
-import { DailyProgressRing } from './DailyProgressRing';
-import { DailyTriviaQuiz } from './DailyTriviaQuiz';
-import { PersonalGoalTracker } from './PersonalGoalTracker';
-import { PersonalGoal } from '../types';
+import { Leaderboard } from "./Leaderboard";
+import { DailyMissions } from "./DailyMissions";
+import { DailyNewsTicker } from "./DailyNewsTicker";
+import { DailyLuckyChest, ChestReward } from "./DailyLuckyChest";
+import { DailyProgressRing } from "./DailyProgressRing";
+import { DailyTriviaQuiz } from "./DailyTriviaQuiz";
+import { PersonalGoalTracker } from "./PersonalGoalTracker";
+import { PersonalGoal } from "../types";
+
 
 interface MainDashboardProps {
   balancePhp: number;
