@@ -23,8 +23,24 @@
   animation: marquee-scroll 25s linear infinite;
 }
 
-/* Pauses scrolling when a user presses down or interacts with it */
 .animate-marquee:hover, 
 .animate-marquee:active {
   animation-play-state: paused;
+}
+
+/* SUBTLE ENGAGING BREATHING ANIMATION */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.2));
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.6));
+  }
+}
+
+.animate-breathe {
+  animation: breathe 2.5s ease-in-out infinite;
+  will-change: transform, filter; /* Optimizes mobile performance */
 }
