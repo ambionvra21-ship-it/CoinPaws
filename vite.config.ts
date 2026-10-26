@@ -1,8 +1,19 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-// https://vitejs.dev
 export default defineConfig({
   plugins: [react()],
-  base: './', // FIX: Forces Vite to use relative paths (./) instead of absolute paths (/) so Android can find the CSS and JS bundles
-})
+  base: './',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    assetsDir: 'assets',
+    sourcemap: false,
+  },
+});
