@@ -15,13 +15,13 @@ export default defineConfig({
     emptyOutDir: true,
     assetsDir: 'assets',
     sourcemap: false,
-    cssCodeSplit: false, // FORCE: Bundles all CSS styles into one single file so Capacitor doesn't miss lazy-loaded sheets
+    cssCodeSplit: false,
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]' // Strips extra hashes to make asset resolution foolproof inside native wrappers
-      }
-    }
+        assetFileNames: 'assets/[name].[ext]',
+      },
+    },
   },
 });
