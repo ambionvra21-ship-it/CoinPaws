@@ -6,3 +6,24 @@
     color: #f8fafc; /* forces slate-100 text */
   }
 }
+
+/* ENDLESS MARQUEE ANIMATION LOOP */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 25s linear infinite;
+}
+
+/* Pauses scrolling when a user presses down or interacts with it */
+.animate-marquee:hover, .animate-marquee:active {
+  animation-play-state: paused;
+}
