@@ -13,7 +13,9 @@ import { MenuDrawer } from './components/MenuDrawer';
 import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
-// Baseline fallback layout block if native storage handles fail on startup
+// Force Capacitor core native bridge inclusion
+import { Capacitor } from '@capacitor/core';
+
 const initialFallbackState: UserState = {
   username: "Player",
   balancePhp: 0.00,
@@ -39,15 +41,31 @@ export default function App() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'cashout' | 'dailyLogins' | 'watchAd' | 'walking' | 'menu' | 'profile' | 'shareEarnings'>(null);
 
-  // SAFE STORAGE HYDRATION ON MOUNT (Bypasses Native Android Startup Exceptions)
+  // FORCE DISMISS BLACK SCREEN / SPLASH SCREEN ON MOUNT
+  useEffect(() => {
+    const clearNativeOverlay = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          // Dynamically dynamically resolve the SplashScreen plugin bridge if it exists
+          const { SplashScreen } = await import('@capacitor/splash-screen');
+          await SplashScreen.hide();
+          console.log("Native splash screen dismissed successfully.");
+        } catch (e) {
+          // If the optional plugin isn't installed, native Android will handle standard window transitions
+          console.log("Splash plugin clear bypassed or handled by native window framework.");
+        }
+      }
+    };
+    clearNativeOverlay();
+  }, []);
+
+  // Safe data hydration layout
   useEffect(() => {
     try {
       const savedData = loadUserState();
-      if (savedData) {
-        setState(savedData);
-      }
+      if (savedData) setState(savedData);
     } catch (e) {
-      console.error("Local storage load blocked or failed:", e);
+      console.error(e);
     } finally {
       setIsHydrated(true);
     }
@@ -61,11 +79,7 @@ export default function App() {
 
   useEffect(() => {
     if (!isHydrated) return;
-    try {
-      saveUserState(state);
-    } catch (e) {
-      console.error("Local storage sync failed:", e);
-    }
+    try { saveUserState(state); } catch (e) { console.error(e); }
   }, [state, isHydrated]);
 
   useEffect(() => {
