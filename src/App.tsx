@@ -137,7 +137,7 @@
       {activeModal === 'walking' && (
         <WalkingView stepsToday={state.stepsToday} onAddSteps={handleAddSteps} onConvertSteps={handleConvertSteps} onClose={() => setActiveModal(null)} />
       )}
-      {activeModal === 'shareEarnings' && (
+        {activeModal === 'shareEarnings' && (
         <ShareEarningsModal balancePhp={state.balancePhp} username={state.username} onClose={() => setActiveModal(null)} />
       )}
     </div>
