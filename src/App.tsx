@@ -13,9 +13,6 @@ import { MenuDrawer } from './components/MenuDrawer';
 import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
-// Force Capacitor core native bridge inclusion
-import { Capacitor } from '@capacitor/core';
-
 const initialFallbackState: UserState = {
   username: "Player",
   balancePhp: 0.00,
@@ -40,24 +37,6 @@ export default function App() {
   const [state, setState] = useState<UserState>(initialFallbackState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'cashout' | 'dailyLogins' | 'watchAd' | 'walking' | 'menu' | 'profile' | 'shareEarnings'>(null);
-
-  // FORCE DISMISS BLACK SCREEN / SPLASH SCREEN ON MOUNT
-  useEffect(() => {
-    const clearNativeOverlay = async () => {
-      if (Capacitor.isNativePlatform()) {
-        try {
-          // Dynamically dynamically resolve the SplashScreen plugin bridge if it exists
-          const { SplashScreen } = await import('@capacitor/splash-screen');
-          await SplashScreen.hide();
-          console.log("Native splash screen dismissed successfully.");
-        } catch (e) {
-          // If the optional plugin isn't installed, native Android will handle standard window transitions
-          console.log("Splash plugin clear bypassed or handled by native window framework.");
-        }
-      }
-    };
-    clearNativeOverlay();
-  }, []);
 
   // Safe data hydration layout
   useEffect(() => {
@@ -141,7 +120,7 @@ export default function App() {
     });
   }, []);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T');
   const hasClaimedCheckin = state.lastCheckinDate === todayStr;
 
   return (
