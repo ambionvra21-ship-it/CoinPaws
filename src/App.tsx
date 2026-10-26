@@ -14,7 +14,6 @@ import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
 export default function App() {
-
   const [state, setState] = useState<UserState>(() => loadUserState());
   const [activeModal, setActiveModal] = useState<
     | null
@@ -51,7 +50,7 @@ export default function App() {
     }, 45000);
     return () => clearInterval(timer);
   }, []);
-  // Add earnings helper
+
   const addEarnings = useCallback(
     (amount: number, title: string, type: Transaction['type']) => {
       setState((prev) => {
@@ -81,7 +80,6 @@ export default function App() {
     []
   );
 
-  // TAP TO MINE handler
   const handleTapMine = useCallback(() => {
     setState((prev) => {
       const increment = 0.01;
@@ -91,12 +89,10 @@ export default function App() {
     });
   }, []);
 
-  // Add walking steps
   const handleAddSteps = useCallback((amount: number) => {
     setState((prev) => ({ ...prev, stepsToday: prev.stepsToday + amount }));
   }, []);
 
-  // Convert steps to real balance
   const handleConvertSteps = useCallback(
     (stepsConverted: number, cashReward: number) => {
       setState((prev) => {
@@ -124,8 +120,6 @@ export default function App() {
     },
     []
   );
-
-  // Daily Streak Claim
   const handleClaimDailyStreak = useCallback((day: number) => {
     const rewards = [0.50, 0.75, 1.00, 1.25, 1.50, 2.00, 5.00];
     const earned = rewards[Math.min(day - 1, rewards.length - 1)] || 0.50;
@@ -157,7 +151,6 @@ export default function App() {
     });
   }, []);
 
-  // Watch Rewarded Ad Completed
   const handleAdRewardClaimed = useCallback((pawsScore: number) => {
     const cash = 0.20;
     setState((prev) => {
@@ -184,7 +177,6 @@ export default function App() {
     });
   }, []);
 
-  // Withdrawal Cash Out Request
   const handleWithdrawal = useCallback(
     (amount: number, method: string, account: string) => {
       setState((prev) => {
@@ -204,7 +196,7 @@ export default function App() {
     },
     []
   );
-  // Toggle personal goals check status
+
   const handleToggleGoal = useCallback((id: string) => {
     setState((prev) => ({
       ...prev,
@@ -214,7 +206,6 @@ export default function App() {
     }));
   }, []);
 
-  // Create a new customized goal tracker item
   const handleAddGoal = useCallback((title: string, icon: string) => {
     setState((prev) => {
       const newGoal = { id: "goal-" + Date.now(), title, icon, completed: false };
@@ -234,7 +225,7 @@ export default function App() {
   const handleClaimChest = useCallback(
     (reward: any) => {
       addEarnings(reward.phpReward, 'Lucky Chest Loot Box Unlocked', 'CHEST');
-      setState((prev) => ({ ...prev, lastLuckyChestDate: new Date().toISOString().split('T') }));
+      setState((prev) => ({ ...prev, lastLuckyChestDate: new Date().toISOString().split('T')[0] }));
       fireRewardConfetti(0.6);
     },
     [addEarnings]
@@ -243,13 +234,13 @@ export default function App() {
   const handleTriviaReward = useCallback(
     (php: number, paws: number, title: string) => {
       addEarnings(php, "Trivia Reward: " + title, 'TRIVIA');
-      setState((prev) => ({ ...prev, triviaAnsweredDate: new Date().toISOString().split('T') }));
+      setState((prev) => ({ ...prev, triviaAnsweredDate: new Date().toISOString().split('T')[0] }));
       fireRewardConfetti(0.5);
     },
     [addEarnings]
   );
 
-  const todayStr = new Date().toISOString().split('T');
+  const todayStr = new Date().toISOString().split('T')[0];
   const hasClaimedCheckin = state.lastCheckinDate === todayStr;
 
   return (
