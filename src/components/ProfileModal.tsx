@@ -5,7 +5,7 @@ import { formatPhp } from '../utils/storage';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  username: string;
+  userName: string;
   email: string;
   balancePhp: number;
   totalPawsEarned: number;
@@ -24,7 +24,7 @@ const mockStats = [
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
-  username,
+  userName,
   email,
   balancePhp,
   totalPawsEarned,
@@ -48,10 +48,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="p-4 flex flex-col gap-4">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
             <div className="w-12 h-12 rounded-xl bg-cyan-500 flex items-center justify-center text-slate-950 font-bold">
-              {username.charAt(0).toUpperCase()}
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-fredoka text-base font-black text-slate-200 truncate">{username}</span>
+              <span className="font-fredoka text-base font-black text-slate-200 truncate">{userName}</span>
               <span className="text-xs text-slate-400 truncate">{email}</span>
             </div>
           </div>
