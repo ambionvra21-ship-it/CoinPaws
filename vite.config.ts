@@ -2,16 +2,24 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import autoprefixer from 'autoprefixer';
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
   ],
-  base: './', // Forces relative path tracking for asset injection
+  base: './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  css: {
+    postcss: {
+      plugins: [
+        autoprefixer() // FIX: Adds retro-compatibility prefixes to your styles so Android WebViews don't crash
+      ],
     },
   },
   build: {
@@ -19,7 +27,7 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     assetsDir: 'assets',
-    // CRUCIAL FOR MOBILE: Bypasses code-splitting modules that native Android WebViews struggle to read on cold launch
+    target: 'es2020', // Ensures JavaScript syntax targets stable, cross-compatible Android engine levels
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
