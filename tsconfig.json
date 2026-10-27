@@ -1,5 +1,21 @@
 {
-  "appId": "com.coinpaws.app",
-  "appName": "CoinPaws",
-  "webDir": "dist"
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    
+    /* Fixes errors TS1259, TS1192 (React imports) */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* Fixes errors TS6142, TS17004 (JSX / React syntax) */
+    "jsx": "react-jsx",
+
+    /* Fixes error TS2307 & module resolution hint (Vite / Tailwind / Confetti) */
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    
+    "skipLibCheck": true,
+    "strict": true
+  }
 }
