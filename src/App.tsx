@@ -1,166 +1,189 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { loadUserState, saveUserState } from './utils/storage';
-import { UserState, Transaction } from './types';
-import { sound } from './utils/sound';
-import { haptics } from './utils/haptics';
-import { fireRewardConfetti } from './utils/confetti';
+import React, { useState, useEffect } from 'react';
 import { MainDashboard } from './components/MainDashboard';
-import { CashOutModal } from './components/views/CashOutModal';
-import { DailyCheckinModal } from './components/DailyCheckinModal';
-import { WatchAndEarnModal } from './components/views/WatchAndEarnModal';
-import { WalkingView } from './components/views/WalkingView';
-import { MenuDrawer } from './components/MenuDrawer';
 import { ProfileModal } from './components/ProfileModal';
-import { ShareEarningsModal } from './components/ShareEarningsModal';
+import { DailyCheckinModal } from './components/DailyCheckinModal';
+import { WalkingView } from './components/views/WalkingView';
+import { PersonalGoal, ChestReward } from './types';
 
-const initialFallbackState: UserState = {
-  userName: "Player",
-  balancePhp: 0.00,
-  totalEarnedPhp: 0.00,
-  referralEarningsPhp: 0.00,
-  tapMineCount: 0,
-  stepsToday: 0,
-  gamesPlayedToday: 0,
+interface UserState {
+  userName: string;
+  email: string;
+  balancePhp: number;
+  totalEarnedPhp: number;
+  referralEarningsPhp: number;
+  tapMineCount: number;
+  stepsToday: number;
+  gamesPlayedToday: number;
+  adsWatchedToday: number;
+  consecutiveDays: number;
+  soundEnabled: boolean;
+  targetThresholdPhp: number;
+  stepsGoal: number;
+  minerBatteryPercent: number;
+  minerLastClaimed: string;
+  claimedMissionIds: string[];
+  lastLuckyChestDate: string;
+  triviaAnsweredDate: string;
+  personalGoals: PersonalGoal[];
+  hasClaimedCheckin: boolean;
+  totalPawsEarned: number;
+}
+
+const initialUserState: UserState = {
+  userName: "PlayerOne",
+  email: "playerone@moneypaws.com",
+  balancePhp: 12.50,
+  totalEarnedPhp: 12.50,
+  referralEarningsPhp: 0,
+  tapMineCount: 150,
+  stepsToday: 45,
+  gamesPlayedToday: 1,
   adsWatchedToday: 0,
-  consecutiveDays: 0,
-  lastCheckinDate: "",
-  freeSpins: 5,
-  freeScratchCards: 5,
+  consecutiveDays: 3,
+  soundEnabled: true,
+  targetThresholdPhp: 500,
+  stepsGoal: 5000,
+  minerBatteryPercent: 100,
+  minerLastClaimed: new Date().toISOString(),
   claimedMissionIds: [],
   lastLuckyChestDate: "",
-  personalGoals: [],
   triviaAnsweredDate: "",
-  soundEnabled: true
+  personalGoals: [
+    { id: 'goal_1', title: 'Complete Daily Missions', icon: 'Trophy', completed: false }
+  ],
+  hasClaimedCheckin: false,
+  totalPawsEarned: 1500
 };
 
 export default function App() {
-  const [state, setState] = useState<UserState>(initialFallbackState);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [activeModal, setActiveModal] = useState<null | 'cashout' | 'dailyLogins' | 'watchAd' | 'walking' | 'menu' | 'profile' | 'shareEarnings'>(null);
+  const [userState, setUserState] = useState<UserState>(initialUserState);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'dashboard' | 'walking'>('dashboard');
 
-  // Safe data hydration layout
-  useEffect(() => {
-    try {
-      const savedData = loadUserState();
-      if (savedData) setState(savedData);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsHydrated(true);
-    }
-  }, []);
+  const handleTapMine = () => {
+    setUserState(prev => ({
+      ...prev,
+      tapMineCount: prev.tapMineCount + 1,
+      balancePhp: prev.balancePhp + 0.01,
+      totalEarnedPhp: prev.totalEarnedPhp + 0.01
+    }));
+  };
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    sound.enabled = state.soundEnabled;
-    haptics.enabled = state.soundEnabled;
-  }, [state.soundEnabled, isHydrated]);
+  const handleClaimMission = (id: string, php: number, paws: number) => {
+    setUserState(prev => ({
+      ...prev,
+      claimedMissionIds: [...prev.claimedMissionIds, id],
+      balancePhp: prev.balancePhp + php,
+      totalEarnedPhp: prev.totalEarnedPhp + php,
+      totalPawsEarned: prev.totalPawsEarned + paws
+    }));
+  };
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    try { saveUserState(state); } catch (e) { console.error(e); }
-  }, [state, isHydrated]);
+  const handleClaimChest = (reward: ChestReward) => {
+    setUserState(prev => ({
+      ...prev,
+      lastLuckyChestDate: new Date().toISOString().split('T')[0],
+      balancePhp: prev.balancePhp + reward.php,
+      totalEarnedPhp: prev.totalEarnedPhp + reward.php,
+      totalPawsEarned: prev.totalPawsEarned + reward.paws
+    }));
+  };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setState((prev) => {
-        const nextBalance = Number((prev.balancePhp + 0.01).toFixed(2));
-        const nextTotal = Number((prev.totalEarnedPhp + 0.01).toFixed(2));
-        return { ...prev, balancePhp: nextBalance, totalEarnedPhp: nextTotal };
-      });
-    }, 45000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleTriviaReward = (php: number, paws: number) => {
+    const todayStr = new Date().toISOString().split('T')[0]; // Extracting index 0 directly to fix Error 124
+    setUserState(prev => ({
+      ...prev,
+      triviaAnsweredDate: todayStr,
+      balancePhp: prev.balancePhp + php,
+      totalEarnedPhp: prev.totalEarnedPhp + php,
+      totalPawsEarned: prev.totalPawsEarned + paws
+    }));
+  };
+  const handleConvertSteps = (steps: number, cash: number) => {
+    setUserState(prev => ({
+      ...prev,
+      stepsToday: 0,
+      balancePhp: prev.balancePhp + cash,
+      totalEarnedPhp: prev.totalEarnedPhp + cash
+    }));
+  };
 
-  const addEarnings = useCallback((amount: number, title: string, type: Transaction['type']) => {
-    setState((prev) => {
-      const nextBalance = Number((prev.balancePhp + amount).toFixed(2));
-      const nextTotal = Number((prev.totalEarnedPhp + amount).toFixed(2));
-      const newTx: Transaction = {
-        id: "tx-" + Date.now(),
-        type,
-        amountPhp: amount,
-        title,
-        timestamp: Date.now(),
-        status: 'COMPLETED',
-      };
-      return {
-        ...prev,
-        balancePhp: nextBalance,
-        totalEarnedPhp: nextTotal,
-        transactions: [newTx, ...prev.transactions].slice(0, 50),
-      };
-    });
-  }, []);
+  const handleToggleGoal = (id: string) => {
+    setUserState(prev => ({
+      ...prev,
+      personalGoals: prev.personalGoals.map(g => g.id === id ? { ...g, completed: !g.completed } : g)
+    }));
+  };
 
-  const handleTapMine = useCallback(() => {
-    setState((prev) => {
-      const nextBalance = Number((prev.balancePhp + 0.01).toFixed(2));
-      const nextTotal = Number((prev.totalEarnedPhp + 0.01).toFixed(2));
-      return { ...prev, balancePhp: nextBalance, totalEarnedPhp: nextTotal, tapMineCount: prev.tapMineCount + 1 };
-    });
-  }, []);
-
-  const handleAddSteps = useCallback((amount: number) => {
-    setState((prev) => ({ ...prev, stepsToday: prev.stepsToday + amount }));
-  }, []);
-
-  const handleConvertSteps = useCallback((stepsConverted: number, cashReward: number) => {
-    setState((prev) => {
-      const nextBalance = Number((prev.balancePhp + cashReward).toFixed(2));
-      const nextTotal = Number((prev.totalEarnedPhp + cashReward).toFixed(2));
-      return { ...prev, balancePhp: nextBalance, totalEarnedPhp: nextTotal, stepsToday: Math.max(0, prev.stepsToday - stepsConverted) };
-    });
-  }, []);
-
-  const handleWithdrawal = useCallback((amount: number, method: string, account: string) => {
-    setState((prev) => {
-      const nextBalance = Math.max(0, Number((prev.balancePhp - amount).toFixed(2)));
-      return { ...prev, balancePhp: nextBalance };
-    });
-  }, []);
-
-  const todayStr = new Date().toISOString().split('T');
-  const hasClaimedCheckin = state.lastCheckinDate === todayStr;
+  const handleAddGoal = (title: string, icon: string) => {
+    const newGoal: PersonalGoal = { id: `goal_${Date.now()}`, title, icon, completed: false };
+    setUserState(prev => ({ ...prev, personalGoals: [...prev.personalGoals, newGoal] }));
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-start pb-8">
-      <MainDashboard
-        balancePhp={state.balancePhp}
-        targetThresholdPhp={state.targetThresholdPhp || 100}
-        tapMineCount={state.tapMineCount}
-        currentUserTotalEarned={state.totalEarnedPhp}
-        currentUserName={state.username}
-        stepsToday={state.stepsToday}
-        gamesPlayedToday={state.gamesPlayedToday}
-        adsWatchedToday={state.adsWatchedToday}
-        hasClaimedCheckin={hasClaimedCheckin}
-        claimedMissionIds={state.claimedMissionIds || []}
-        lastLuckyChestDate={state.lastLuckyChestDate || ''}
-        personalGoals={state.personalGoals || []}
-        triviaAnsweredDate={state.triviaAnsweredDate || ''}
-        onTapMine={handleTapMine}
-        onOpenCashOut={() => setActiveModal('cashout')}
-        onOpenShareEarnings={() => setActiveModal('shareEarnings')}
-        onOpenMenu={() => setActiveModal('menu')}
-        onOpenProfile={() => setActiveModal('profile')}
-        onOpenDailyLogins={() => setActiveModal('dailyLogins')}
-        onOpenWatchAd={() => setActiveModal('watchAd')}
-        onOpenSpinWheel={() => {}}
-        onOpenWalking={() => setActiveModal('walking')}
-        onOpenScratchCards={() => {}}
-        onOpenFruitTap={() => {}}
-        onClaimMission={() => {}}
-        onClaimChest={() => {}}
-        onToggleGoal={() => {}}
-        onAddGoal={() => {}}
-        onTriviaReward={() => {}}
-      />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex justify-center">
+      <div className="w-full max-w-md bg-slate-900 shadow-xl overflow-hidden min-h-screen flex flex-col justify-between">
+        
+        {activeView === 'dashboard' ? (
+          <MainDashboard
+            balancePhp={userState.balancePhp}
+            targetThresholdPhp={userState.targetThresholdPhp}
+            tapMineCount={userState.tapMineCount}
+            currentUserTotalEarned={userState.totalEarnedPhp}
+            currentUserName={userState.userName}
+            stepsToday={userState.stepsToday}
+            gamesPlayedToday={userState.gamesPlayedToday}
+            adsWatchedToday={userState.adsWatchedToday}
+            hasClaimedCheckin={userState.hasClaimedCheckin}
+            claimedMissionIds={userState.claimedMissionIds}
+            lastLuckyChestDate={userState.lastLuckyChestDate}
+            personalGoals={userState.personalGoals}
+            triviaAnsweredDate={userState.triviaAnsweredDate}
+            onTapMine={handleTapMine}
+            onOpenCashOut={() => console.log('Cashout triggered')}
+            onOpenShareEarnings={() => console.log('Share triggered')}
+            onOpenMenu={() => console.log('Menu triggered')}
+            onOpenProfile={() => setIsProfileOpen(true)}
+            onOpenDailyLogins={() => setIsCheckinOpen(true)}
+            onOpenWatchAd={() => setUserState(p => ({ ...p, adsWatchedToday: p.adsWatchedToday + 1 }))}
+            onOpenSpinWheel={() => console.log('Spin triggered')}
+            onOpenWalking={() => setActiveView('walking')}
+            onOpenScrchedCards={() => console.log('Scratch triggered')}
+            onOpenFruitTap={() => console.log('Fruit triggered')}
+            onClaimMission={handleClaimMission}
+            onClaimChest={handleClaimChest}
+            onToggleGoal={handleToggleGoal}
+            onAddGoal={handleAddGoal}
+            onTriviaReward={handleTriviaReward}
+          />
+        ) : (
+          <WalkingView
+            stepsToday={userState.stepsToday}
+            onAddSteps={(amt) => setUserState(p => ({ ...p, stepsToday: p.stepsToday + amt }))}
+            onConvertSteps={handleConvertSteps}
+            onClose={() => setActiveView('dashboard')}
+          />
+        )}
 
-      {activeModal === 'profile' && <ProfileModal userState={state} onClose={() => setActiveModal(null)} />}
-      {activeModal === 'cashout' && <CashOutModal balancePhp={state.balancePhp} onConfirmWithdrawal={handleWithdrawal} onClose={() => setActiveModal(null)} />}
-      {activeModal === 'dailyLogins' && <DailyCheckinModal consecutiveDays={state.consecutiveDays} hasClaimedToday={hasClaimedCheckin} onClaim={() => {}} onClose={() => setActiveModal(null)} />}
-      {activeModal === 'walking' && <WalkingView stepsToday={state.stepsToday} onAddSteps={handleAddSteps} onConvertSteps={handleConvertSteps} onClose={() => setActiveModal(null)} />}
+        <ProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          userName={userState.userName}
+          email={userState.email}
+          balancePhp={userState.balancePhp}
+          totalPawsEarned={userState.totalPawsEarned}
+        />
+
+        {isCheckinOpen && (
+          <DailyCheckinModal
+            consecutiveDays={userState.consecutiveDays}
+            hasClaimedToday={userState.hasClaimedCheckin}
+            onClaim={() => setUserState(p => ({ ...p, hasClaimedCheckin: true, balancePhp: p.balancePhp + 1.00 }))}
+            onClose={() => setIsCheckinOpen(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
