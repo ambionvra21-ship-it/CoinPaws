@@ -35,3 +35,8 @@ export const fireRewardConfetti = (intensity: number = 0.4) => {
 
   setTimeout(() => container.remove(), 3100);
 };
+
+// Added missing jackpot confetti export
+export const fireJackpotConfetti = () => {
+  fireRewardConfetti(1.0);
+};
