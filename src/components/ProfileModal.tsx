@@ -3,12 +3,16 @@ import { X, User, Wallet, BarChart3, Shield, Info } from 'lucide-react';
 import { formatPhp } from '../utils/storage';
 
 interface ProfileModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  userName: string;
-  email: string;
-  balancePhp: number;
-  totalPawsEarned: number;
+// Fix:
+<ProfileModal 
+  isOpen={isProfileOpen} 
+  onClose={() => setIsProfileOpen(false)} 
+  userName={userState.userName}
+  email={userState.email || "user@moneypaws.com"}
+  balancePhp={userState.balancePhp || 0}
+  totalPawsEarned={userState.totalPawsEarned || 0}
+/>
+
 }
 
 const mockStats = [
