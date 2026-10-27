@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, CheckCircle2, Footprints, Tv, RefreshCw, Sparkles } from 'lucide-react';
+import { Trophy, CheckCircle2, Footprints, Tv, RefreshCw } from 'lucide-react';
 import { sound } from '../utils/sound';
 import { haptics } from '../utils/haptics';
 
@@ -50,6 +50,7 @@ const dailyMissionsList: MissionItem[] = [
     pawsReward: 35,
   },
 ];
+
 export const DailyMissions: React.FC<DailyMissionsProps> = ({
   stepsToday,
   gamesPlayedToday,
@@ -68,14 +69,13 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
   };
 
   const handleClaim = (mission: MissionItem) => {
-    sound.playSuccess();
-    haptics.notificationSuccess();
+    sound.playCoin();
+    haptics.tapMine();
     onClaimReward(mission.id, mission.phpReward, mission.pawsReward, mission.title);
   };
 
   return (
     <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 flex flex-col gap-3 shadow-md">
-      {/* Module Title Section */}
       <div className="flex items-center gap-2 border-b border-slate-800/60 pb-2">
         <Trophy className="w-5 h-5 text-cyan-400 stroke-[2.2]" />
         <h3 className="font-fredoka text-sm font-black uppercase tracking-wide text-slate-200">
@@ -83,14 +83,12 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
         </h3>
       </div>
 
-      {/* Mission Row Stack List */}
       <div className="flex flex-col gap-2.5">
         {dailyMissionsList.map((mission) => {
           const currentProgress = getCurrentValue(mission.targetType);
           const isCompleted = currentProgress >= mission.targetValue;
           const isClaimed = claimedMissionIds.includes(mission.id);
 
-          // Get dynamic icon based on target metric category
           const renderMissionIcon = () => {
             switch (mission.targetType) {
               case 'steps': return <Footprints className="w-4 h-4 text-emerald-400" />;
@@ -108,7 +106,6 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
                   : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700/50'
               }`}
             >
-              {/* Left Context Metadata Area */}
               <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="w-9 h-9 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center shrink-0 mt-0.5 shadow-inner">
                   {renderMissionIcon()}
@@ -117,7 +114,6 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
                   <span className="text-xs font-bold text-slate-200 truncate">{mission.title}</span>
                   <span className="text-[10px] text-slate-400 leading-normal line-clamp-1">{mission.description}</span>
                   
-                  {/* Visual Progress Bar Percentage Tracking */}
                   {!isClaimed && (
                     <div className="flex items-center gap-2 mt-1.5 w-full max-w-[140px]">
                       <div className="flex-1 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800/40">
@@ -134,7 +130,6 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
                 </div>
               </div>
 
-              {/* Right Action Button Control Area */}
               <div className="shrink-0 flex flex-col items-end gap-1.5">
                 {isClaimed ? (
                   <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase tracking-wide bg-slate-950/60 px-2.5 py-1.5 rounded-xl border border-slate-900/80">
@@ -144,7 +139,7 @@ export const DailyMissions: React.FC<DailyMissionsProps> = ({
                 ) : isCompleted ? (
                   <button
                     onClick={() => handleClaim(mission)}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-[0_3px_10px_rgba(16,185,129,0.25)] active:scale-95 transition-transform animate-pulse"
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-[0_3px_10px_rgba(16,185,129,0.25)] active:scale-95 transition-transform"
                   >
                     Claim Reward
                   </button>
