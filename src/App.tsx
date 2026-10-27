@@ -3,7 +3,8 @@ import { MainDashboard } from './components/MainDashboard';
 import { ProfileModal } from './components/ProfileModal';
 import { DailyCheckinModal } from './components/DailyCheckinModal';
 import { WalkingView } from './components/views/WalkingView';
-import { PersonalGoal, ChestReward } from './types';
+import { PersonalGoal } from './types';
+import { ChestReward } from './components/DailyLuckyChest';
 
 interface UserState {
   userName: string;
@@ -49,7 +50,7 @@ const initialUserState: UserState = {
   lastLuckyChestDate: "",
   triviaAnsweredDate: "",
   personalGoals: [
-    { id: 'goal_1', title: 'Complete Daily Missions', icon: 'Trophy', completed: false }
+    { id: 'goal_1', title: 'Complete Daily Missions', icon: 'Trophy', completed: false, rewardPaws: 50 }
   ],
   hasClaimedCheckin: false,
   totalPawsEarned: 1500
@@ -91,7 +92,7 @@ export default function App() {
   };
 
   const handleTriviaReward = (php: number, paws: number) => {
-    const todayStr = new Date().toISOString().split('T')[0]; // Extracting index 0 directly to fix Error 124
+    const todayStr = new Date().toISOString().split('T')[0];
     setUserState(prev => ({
       ...prev,
       triviaAnsweredDate: todayStr,
@@ -117,7 +118,7 @@ export default function App() {
   };
 
   const handleAddGoal = (title: string, icon: string) => {
-    const newGoal: PersonalGoal = { id: `goal_${Date.now()}`, title, icon, completed: false };
+    const newGoal: PersonalGoal = { id: `goal_${Date.now()}`, title, icon, completed: false, rewardPaws: 25 };
     setUserState(prev => ({ ...prev, personalGoals: [...prev.personalGoals, newGoal] }));
   };
 
@@ -149,7 +150,7 @@ export default function App() {
             onOpenWatchAd={() => setUserState(p => ({ ...p, adsWatchedToday: p.adsWatchedToday + 1 }))}
             onOpenSpinWheel={() => console.log('Spin triggered')}
             onOpenWalking={() => setActiveView('walking')}
-            onOpenScrchedCards={() => console.log('Scratch triggered')}
+            onOpenScratchCards={() => console.log('Scratch triggered')}
             onOpenFruitTap={() => console.log('Fruit triggered')}
             onClaimMission={handleClaimMission}
             onClaimChest={handleClaimChest}
