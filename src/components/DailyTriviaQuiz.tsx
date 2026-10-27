@@ -16,7 +16,6 @@ interface TriviaQuestion {
   pawsReward: number;
 }
 
-// Today's custom trivia item
 const dailyQuestion: TriviaQuestion = {
   question: "Which of the following is a primary characteristic of decentralized passive income systems?",
   options: [
@@ -29,6 +28,7 @@ const dailyQuestion: TriviaQuestion = {
   phpReward: 5.00,
   pawsReward: 50,
 };
+
 export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
   answeredDate,
   onReward,
@@ -54,18 +54,17 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
     setIsCorrect(correct);
 
     if (correct) {
-      sound.playSuccess();
-      haptics.notificationSuccess();
+      sound.playCoin();
+      haptics.tapMine();
       onReward(dailyQuestion.phpReward, dailyQuestion.pawsReward, "Daily Trivia Complete");
     } else {
-      sound.playError();
-      haptics.notificationWarning();
+      sound.playClick();
+      haptics.tapMine();
     }
   };
 
   return (
     <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 flex flex-col justify-between min-h-[170px] relative overflow-hidden">
-      {/* Top Section */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1.5 text-amber-400">
           <HelpCircle className="w-4 h-4 stroke-[2.2]" />
@@ -74,9 +73,8 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
 
         {isAlreadyAnswered ? (
           <div className="flex flex-col items-center justify-center py-6 text-center h-full">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]" />
+            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
             <span className="text-xs font-bold text-slate-300 mt-2">Quiz Completed!</span>
-            <span className="text-[9px] font-medium text-slate-500 mt-0.5">Come back tomorrow for fresh rewards</span>
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-1">
@@ -84,13 +82,12 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
               {dailyQuestion.question}
             </p>
             
-            {/* Option Choices Grid */}
             <div className="flex flex-col gap-1.5 mt-1">
               {dailyQuestion.options.map((option, idx) => {
                 let btnStyle = "bg-slate-950/40 border-slate-800 text-slate-400";
                 
                 if (selectedOption === idx) {
-                  btnStyle = "bg-cyan-500/10 border-cyan-400 text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.15)]";
+                  btnStyle = "bg-cyan-500/10 border-cyan-400 text-cyan-300";
                 }
                 if (hasSubmitted) {
                   if (idx === dailyQuestion.correctIndex) {
@@ -105,7 +102,7 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
                     key={idx}
                     disabled={hasSubmitted}
                     onClick={() => handleOptionSelect(idx)}
-                    className={`w-full px-2.5 py-1.5 rounded-lg border text-left text-[10px] font-medium transition-all active:scale-[0.99] ${btnStyle}`}
+                    className={`w-full px-2.5 py-1.5 rounded-lg border text-left text-[10px] font-medium transition-all ${btnStyle}`}
                   >
                     {option}
                   </button>
@@ -116,7 +113,6 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
         )}
       </div>
 
-      {/* Bottom Interface Action Bar */}
       {!isAlreadyAnswered && (
         <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-800/40 pt-2">
           <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
@@ -130,18 +126,18 @@ export const DailyTriviaQuiz: React.FC<DailyTriviaQuizProps> = ({
               disabled={selectedOption === null}
               className={`px-3 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all ${
                 selectedOption !== null 
-                  ? 'bg-cyan-500 text-slate-950 shadow-md hover:brightness-110 active:scale-95' 
-                  : 'bg-slate-800 text-slate-500 border border-slate-700/30 opacity-50'
+                  ? 'bg-cyan-500 text-slate-950' 
+                  : 'bg-slate-800 text-slate-500 opacity-50'
               }`}
             >
-              Submit Answer
+              Submit
             </button>
           ) : (
             <div className="flex items-center gap-1 text-[10px] font-bold">
               {isCorrect ? (
-                <span className="text-emerald-400 flex items-center gap-0.5"><CheckCircle2 className="w-3.5 h-3.5" /> Correct</span>
+                <span className="text-emerald-400 flex items-center gap-0.5">✔ Correct</span>
               ) : (
-                <span className="text-rose-400 flex items-center gap-0.5"><AlertCircle className="w-3.5 h-3.5" /> Wrong</span>
+                <span className="text-rose-400 flex items-center gap-0.5">✖ Wrong</span>
               )}
             </div>
           )}
