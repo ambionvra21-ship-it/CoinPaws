@@ -14,7 +14,7 @@ import { ProfileModal } from './components/ProfileModal';
 import { ShareEarningsModal } from './components/ShareEarningsModal';
 
 const initialFallbackState: UserState = {
-  username: "Player",
+  userName: "Player",
   balancePhp: 0.00,
   totalEarnedPhp: 0.00,
   referralEarningsPhp: 0.00,
